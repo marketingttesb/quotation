@@ -76,7 +76,6 @@
         </thead>
         <tbody></tbody>
         <tfoot>
-            <!-- grandTotalTitle colspan will be adjusted dynamically before printing -->
             <tr>
                 <td id="grandTotalTitle" colspan="7" class="text-right totals">Grand Total: MYR</td>
                 <td id="grandTotalSell">0.00</td>
@@ -88,10 +87,13 @@
 
     <button class="btn btn-success no-print" onclick="addItem()">+ Add Item</button>
 
-    <!-- Export Buttons -->
+    <!-- Export / Import / Print Buttons -->
     <div class="no-print text-center mt-3">
         <button class="btn btn-primary" onclick="printCustomer()">Print Customer Copy</button>
         <button class="btn btn-secondary" onclick="printOffice()">Print Office Copy</button>
+        <button class="btn btn-info" onclick="exportXML()">Export XML</button>
+        <input type="file" id="importFile" class="d-none" accept=".xml" onchange="importXML(event)">
+        <button class="btn btn-warning" onclick="document.getElementById('importFile').click()">Import XML</button>
     </div>
 </div>
 
@@ -108,17 +110,17 @@ function syncPrintFields() {
 }
 
 /* Add / remove items */
-function addItem() {
+function addItem(data) {
     var tbody = document.getElementById("itemsTable").getElementsByTagName("tbody")[0];
     var row = document.createElement("tr");
     row.innerHTML =
         '<td class="row-number"></td>' +
-        '<td contenteditable="true">Item</td>' +
-        '<td contenteditable="true">Code</td>' +
-        '<td contenteditable="true">Description</td>' +
-        '<td><input type="number" value="1" min="1" required class="form-control" oninput="updateRow(this)"><span class="print-only"></span></td>' +
-        '<td><input type="number" value="0" min="0" required class="form-control" oninput="updateRow(this)"><span class="print-only"></span></td>' +
-        '<td class="office-only"><input type="number" value="0" min="0" required class="form-control" oninput="updateRow(this)"><span class="print-only"></span></td>' +
+        '<td contenteditable="true">' + (data?.product || 'Item') + '</td>' +
+        '<td contenteditable="true">' + (data?.code || 'Code') + '</td>' +
+        '<td contenteditable="true">' + (data?.description || 'Description') + '</td>' +
+        '<td><input type="number" value="' + (data?.qty || 1) + '" min="1" required class="form-control" oninput="updateRow(this)"><span class="print-only"></span></td>' +
+        '<td><input type="number" value="' + (data?.sell || 0) + '" min="0" required class="form-control" oninput="updateRow(this)"><span class="print-only"></span></td>' +
+        '<td class="office-only"><input type="number" value="' + (data?.cost || 0) + '" min="0" required class="form-control" oninput="updateRow(this)"><span class="print-only"></span></td>' +
         '<td class="subtotalSell">0.00</td>' +
         '<td class="subtotalCost office-only">0.00</td>' +
         '<td class="no-print"><button class="btn btn-danger btn-sm" onclick="removeItem(this)">Remove</button></td>';
@@ -196,35 +198,28 @@ function validateForm() {
     return true;
 }
 
-/* Adjust the Grand Total title colspan so printed layout aligns correctly.
-   `show` indicates whether office-only columns are currently visible.
-   We treat .no-print columns as hidden in print view (so exclude them).
-*/
+/* Adjust the Grand Total title colspan */
 function adjustGrandTotalColspan(show) {
     var ths = document.querySelectorAll("#itemsTable thead th");
     var visibleCols = 0;
     ths.forEach(function(th) {
-        // simulate print-time visibility: skip .no-print always (they won't be printed)
         if (th.classList.contains('no-print')) return;
-        // skip office-only when office columns are hidden
         if (th.classList.contains('office-only') && !show) return;
         visibleCols++;
     });
 
-    // We want: titleColspan + 1 (sell) + (1 if office visible cost) = visibleCols
     var titleColspan = visibleCols - 1 - (show ? 1 : 0);
     if (titleColspan < 1) titleColspan = 1;
     var titleCell = document.getElementById('grandTotalTitle');
     if (titleCell) titleCell.colSpan = titleColspan;
 }
 
-/* Toggle display of office-only columns and adjust colspan accordingly */
+/* Toggle display of office-only columns */
 function toggleOfficeCols(show) {
     var elems = document.querySelectorAll(".office-only");
     for (var i = 0; i < elems.length; i++) {
         elems[i].style.display = show ? "" : "none";
     }
-    // adjust colspan to match the current visible columns (simulate print layout)
     adjustGrandTotalColspan(show);
 }
 
@@ -232,12 +227,9 @@ function toggleOfficeCols(show) {
 function printCustomer() {
     if (!validateForm()) return;
     syncPrintFields();
-    // hide office-only columns for customer copy, then adjust colspan, then print
     toggleOfficeCols(false);
-    // small delay may help rendering in some browsers; not required but safe
     setTimeout(function() {
         window.print();
-        // restore office columns after print
         toggleOfficeCols(true);
     }, 50);
 }
@@ -251,9 +243,100 @@ function printOffice() {
     }, 50);
 }
 
-/* Initial setup: ensure office columns shown and colspan set correctly */
+/* ---------- NEW FUNCTIONS: EXPORT / IMPORT XML ---------- */
+function exportXML() {
+    var xmlDoc = document.implementation.createDocument("", "", null);
+    var quotation = xmlDoc.createElement("quotation");
+
+    // customer info
+    ["customerName", "customerContact", "quotationDate", "agentName"].forEach(id => {
+        var el = xmlDoc.createElement(id);
+        el.textContent = document.getElementById(id).value;
+        quotation.appendChild(el);
+    });
+
+    // items
+    var itemsEl = xmlDoc.createElement("items");
+    var rows = document.querySelectorAll("#itemsTable tbody tr");
+    rows.forEach(row => {
+        var itemEl = xmlDoc.createElement("item");
+        var product = row.cells[1].innerText;
+        var code = row.cells[2].innerText;
+        var description = row.cells[3].innerText;
+        var qty = row.querySelector('td:nth-child(5) input').value;
+        var sell = row.querySelector('td:nth-child(6) input').value;
+        var cost = row.querySelector('td:nth-child(7) input') ? row.querySelector('td:nth-child(7) input').value : 0;
+
+        [["product", product], ["code", code], ["description", description], ["qty", qty], ["sell", sell], ["cost", cost]].forEach(([k, v]) => {
+            var el = xmlDoc.createElement(k);
+            el.textContent = v;
+            itemEl.appendChild(el);
+        });
+
+        itemsEl.appendChild(itemEl);
+    });
+    quotation.appendChild(itemsEl);
+
+    xmlDoc.appendChild(quotation);
+
+    var serializer = new XMLSerializer();
+    var xmlString = serializer.serializeToString(xmlDoc);
+
+    // build filename: date-customer_name-contact_no-agent_name.xml
+    var date = document.getElementById("quotationDate").value || "no_date";
+    var customer = document.getElementById("customerName").value || "no_name";
+    var contact = document.getElementById("customerContact").value || "no_contact";
+    var agent = document.getElementById("agentName").value || "no_agent";
+
+    // clean up to avoid invalid filename chars
+    function clean(str) {
+        return str.replace(/[^a-z0-9_-]/gi, "_");
+    }
+
+    var filename = `${clean(date)}-${clean(customer)}-${clean(contact)}-${clean(agent)}.xml`;
+
+    var blob = new Blob([xmlString], {type: "application/xml"});
+    var link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = filename;
+    link.click();
+}
+
+function importXML(event) {
+    var file = event.target.files[0];
+    if (!file) return;
+    var reader = new FileReader();
+    reader.onload = function(e) {
+        var parser = new DOMParser();
+        var xmlDoc = parser.parseFromString(e.target.result, "application/xml");
+
+        document.getElementById("customerName").value = xmlDoc.getElementsByTagName("customerName")[0]?.textContent || "";
+        document.getElementById("customerContact").value = xmlDoc.getElementsByTagName("customerContact")[0]?.textContent || "";
+        document.getElementById("quotationDate").value = xmlDoc.getElementsByTagName("quotationDate")[0]?.textContent || "";
+        document.getElementById("agentName").value = xmlDoc.getElementsByTagName("agentName")[0]?.textContent || "";
+        syncPrintFields();
+
+        // clear existing items
+        document.querySelector("#itemsTable tbody").innerHTML = "";
+
+        var items = xmlDoc.getElementsByTagName("item");
+        for (var i = 0; i < items.length; i++) {
+            var it = items[i];
+            addItem({
+                product: it.getElementsByTagName("product")[0]?.textContent || "Item",
+                code: it.getElementsByTagName("code")[0]?.textContent || "Code",
+                description: it.getElementsByTagName("description")[0]?.textContent || "Description",
+                qty: it.getElementsByTagName("qty")[0]?.textContent || 1,
+                sell: it.getElementsByTagName("sell")[0]?.textContent || 0,
+                cost: it.getElementsByTagName("cost")[0]?.textContent || 0
+            });
+        }
+    };
+    reader.readAsText(file);
+}
+
+/* Initial setup */
 document.addEventListener('DOMContentLoaded', function() {
-    // ensure office-only columns visible initially
     toggleOfficeCols(true);
     updateTotals();
 });
