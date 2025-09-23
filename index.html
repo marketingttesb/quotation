@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>TIEN TIEN Quick Quotation Generator</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css">
+<style>
+    .no-print { margin-top: 15px; }
+    .totals { font-weight: bold; }
+    .print-only { display: none; }
+    @media print {
+        .no-print { display: none !important; }
+        input.form-control { display: none !important; }
+        .print-only { display: table !important; }
+        .form-control { border: none !important; }
+    }
+</style>
+</head>
+<body class="p-4">
+
+<div class="container" id="quotation-container">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <img src="transparent_black.png" alt="Logo" style="height:80px;">
+        <h2>Quick Quotation</h2>
+    </div>
+
+    <!-- Customer Info (Input) -->
+    <div class="row mb-3 no-print">
+        <div class="col-md-6">
+            <label>Customer Name</label>
+            <input type="text" id="customerName" class="form-control" required oninput="syncPrintFields()">
+        </div>
+        <div class="col-md-6">
+            <label>Contact No</label>
+            <input type="text" id="customerContact" class="form-control" required oninput="syncPrintFields()">
+        </div>
+    </div>
+    <div class="row mb-3 no-print">
+        <div class="col-md-6">
+            <label>Date</label>
+            <input type="date" id="quotationDate" class="form-control" required oninput="syncPrintFields()">
+        </div>
+        <div class="col-md-6">
+            <label>Agent Name</label>
+            <input type="text" id="agentName" class="form-control" required oninput="syncPrintFields()">
+        </div>
+    </div>
+
+    <!-- Customer Info (Print) -->
+    <table class="table table-bordered print-only mb-3">
+        <tr>
+            <td><strong>Customer Name:</strong><br /> <span id="printCustomerName"></span></td>
+            <td><strong>Contact No:</strong><br /> <span id="printCustomerContact"></span></td>
+        </tr>
+        <tr>
+            <td><strong>Date:</strong><br /> <span id="printQuotationDate"></span></td>
+            <td><strong>Agent Name:</strong><br /> <span id="printAgentName"></span></td>
+        </tr>
+    </table>
+
+    <!-- Items Table -->
+    <table class="table table-bordered" id="itemsTable">
+        <thead class="thead-light">
+            <tr>
+                <th>#</th>
+                <th>Products</th>
+                <th>Codes</th>
+                <th>Descriptions</th>
+                <th>Quantity</th>
+                <th>Selling Price<br /> (MYR)</th>
+                <th class="office-only">Cost Price<br /> (MYR)</th>
+                <th>Sub-Total<br /> (MYR)</th>
+                <th class="office-only">Cost Sub-Total<br /> (MYR)</th>
+                <th class="no-print">Action</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+        <tfoot>
+            <!-- grandTotalTitle colspan will be adjusted dynamically before printing -->
+            <tr>
+                <td id="grandTotalTitle" colspan="7" class="text-right totals">Grand Total: MYR</td>
+                <td id="grandTotalSell">0.00</td>
+                <td class="office-only" id="grandTotalCost">0.00</td>
+                <td class="no-print"></td>
+            </tr>
+        </tfoot>
+    </table>
+
+    <button class="btn btn-success no-print" onclick="addItem()">+ Add Item</button>
+
+    <!-- Export Buttons -->
+    <div class="no-print text-center mt-3">
+        <button class="btn btn-primary" onclick="printCustomer()">Print Customer Copy</button>
+        <button class="btn btn-secondary" onclick="printOffice()">Print Office Copy</button>
+    </div>
+</div>
+
+<script>
+document.getElementById("quotationDate").value = new Date().toISOString().split('T')[0];
+syncPrintFields();
+
+/* Sync input --> print-only spans */
+function syncPrintFields() {
+    document.getElementById("printCustomerName").innerHTML = document.getElementById("customerName").value;
+    document.getElementById("printCustomerContact").innerHTML = document.getElementById("customerContact").value;
+    document.getElementById("printQuotationDate").innerHTML = document.getElementById("quotationDate").value;
+    document.getElementById("printAgentName").innerHTML = document.getElementById("agentName").value;
+}
+
+/* Add / remove items */
+function addItem() {
+    var tbody = document.getElementById("itemsTable").getElementsByTagName("tbody")[0];
+    var row = document.createElement("tr");
+    row.innerHTML =
+        '<td class="row-number"></td>' +
+        '<td contenteditable="true">Item</td>' +
+        '<td contenteditable="true">Code</td>' +
+        '<td contenteditable="true">Description</td>' +
+        '<td><input type="number" value="1" min="1" required class="form-control" oninput="updateRow(this)"><span class="print-only"></span></td>' +
+        '<td><input type="number" value="0" min="0" required class="form-control" oninput="updateRow(this)"><span class="print-only"></span></td>' +
+        '<td class="office-only"><input type="number" value="0" min="0" required class="form-control" oninput="updateRow(this)"><span class="print-only"></span></td>' +
+        '<td class="subtotalSell">0.00</td>' +
+        '<td class="subtotalCost office-only">0.00</td>' +
+        '<td class="no-print"><button class="btn btn-danger btn-sm" onclick="removeItem(this)">Remove</button></td>';
+    tbody.appendChild(row);
+    renumberRows();
+    updateTotals();
+}
+
+function removeItem(button) {
+    button.parentNode.parentNode.remove();
+    renumberRows();
+    updateTotals();
+}
+
+/* Row numbers */
+function renumberRows() {
+    var rows = document.querySelectorAll("#itemsTable tbody tr");
+    for (var i = 0; i < rows.length; i++) {
+        rows[i].querySelector(".row-number").innerHTML = (i + 1);
+    }
+}
+
+/* Update print spans and totals when input changes */
+function updateRow(input) {
+    var span = input.nextElementSibling;
+    span.innerHTML = input.value;
+    updateTotals();
+}
+
+/* Totals calculation */
+function updateTotals() {
+    var rows = document.querySelectorAll("#itemsTable tbody tr");
+    var grandSell = 0;
+    var grandCost = 0;
+
+    for (var i = 0; i < rows.length; i++) {
+        var qty = parseFloat(rows[i].querySelector('td:nth-child(5) input').value) || 0;
+        var sell = parseFloat(rows[i].querySelector('td:nth-child(6) input').value) || 0;
+        var cost = 0;
+        if (rows[i].querySelector('td:nth-child(7) input')) {
+            cost = parseFloat(rows[i].querySelector('td:nth-child(7) input').value) || 0;
+        }
+
+        rows[i].querySelector('td:nth-child(5) span').innerHTML = qty;
+        rows[i].querySelector('td:nth-child(6) span').innerHTML = sell.toFixed(2);
+        if (rows[i].querySelector('td:nth-child(7) span')) {
+            rows[i].querySelector('td:nth-child(7) span').innerHTML = cost.toFixed(2);
+        }
+
+        var subtotalSell = qty * sell;
+        var subtotalCost = qty * cost;
+
+        rows[i].querySelector(".subtotalSell").innerHTML = subtotalSell.toFixed(2);
+        if (rows[i].querySelector(".subtotalCost")) {
+            rows[i].querySelector(".subtotalCost").innerHTML = subtotalCost.toFixed(2);
+        }
+
+        grandSell += subtotalSell;
+        grandCost += subtotalCost;
+    }
+
+    document.getElementById("grandTotalSell").innerHTML = grandSell.toFixed(2);
+    document.getElementById("grandTotalCost").innerHTML = grandCost.toFixed(2);
+}
+
+/* Simple required-field validation */
+function validateForm() {
+    var requiredInputs = document.querySelectorAll("input[required]");
+    for (var i = 0; i < requiredInputs.length; i++) {
+        if (!requiredInputs[i].value) {
+            alert("Please fill all required fields.");
+            return false;
+        }
+    }
+    return true;
+}
+
+/* Adjust the Grand Total title colspan so printed layout aligns correctly.
+   `show` indicates whether office-only columns are currently visible.
+   We treat .no-print columns as hidden in print view (so exclude them).
+*/
+function adjustGrandTotalColspan(show) {
+    var ths = document.querySelectorAll("#itemsTable thead th");
+    var visibleCols = 0;
+    ths.forEach(function(th) {
+        // simulate print-time visibility: skip .no-print always (they won't be printed)
+        if (th.classList.contains('no-print')) return;
+        // skip office-only when office columns are hidden
+        if (th.classList.contains('office-only') && !show) return;
+        visibleCols++;
+    });
+
+    // We want: titleColspan + 1 (sell) + (1 if office visible cost) = visibleCols
+    var titleColspan = visibleCols - 1 - (show ? 1 : 0);
+    if (titleColspan < 1) titleColspan = 1;
+    var titleCell = document.getElementById('grandTotalTitle');
+    if (titleCell) titleCell.colSpan = titleColspan;
+}
+
+/* Toggle display of office-only columns and adjust colspan accordingly */
+function toggleOfficeCols(show) {
+    var elems = document.querySelectorAll(".office-only");
+    for (var i = 0; i < elems.length; i++) {
+        elems[i].style.display = show ? "" : "none";
+    }
+    // adjust colspan to match the current visible columns (simulate print layout)
+    adjustGrandTotalColspan(show);
+}
+
+/* Print flows */
+function printCustomer() {
+    if (!validateForm()) return;
+    syncPrintFields();
+    // hide office-only columns for customer copy, then adjust colspan, then print
+    toggleOfficeCols(false);
+    // small delay may help rendering in some browsers; not required but safe
+    setTimeout(function() {
+        window.print();
+        // restore office columns after print
+        toggleOfficeCols(true);
+    }, 50);
+}
+
+function printOffice() {
+    if (!validateForm()) return;
+    syncPrintFields();
+    toggleOfficeCols(true);
+    setTimeout(function() {
+        window.print();
+    }, 50);
+}
+
+/* Initial setup: ensure office columns shown and colspan set correctly */
+document.addEventListener('DOMContentLoaded', function() {
+    // ensure office-only columns visible initially
+    toggleOfficeCols(true);
+    updateTotals();
+});
+</script>
+
+</body>
+</html>
