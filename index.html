@@ -32,13 +32,13 @@
         <div class="d-flex align-items-center">
             <h2 class="mb-0">Quick Quotation</h2>
             <!-- Export & Import icons -->
-            <button class="icon-btn no-print" title="Export Quotation" onclick="exportXML()">
+            <button class="icon-btn no-print" title="Export Quotation" onclick="exportJSON()">
                 <i class="bi bi-download"></i>
             </button>
-            <button class="icon-btn no-print" title="Import Quotation" onclick="document.getElementById('importXML').click()">
+            <button class="icon-btn no-print" title="Import Quotation" onclick="document.getElementById('importJSON').click()">
                 <i class="bi bi-upload"></i>
             </button>
-            <input type="file" id="importXML" class="d-none" accept=".xml" onchange="importXML(event)">
+            <input type="file" id="importJSON" class="d-none" accept=".json" onchange="importJSON(event)">
         </div>
     </div>
 
@@ -89,7 +89,7 @@
                 <th class="office-only">Cost Price<br /> (MYR)</th>
                 <th>Sub-Total<br /> (MYR)</th>
                 <th class="office-only">Cost Sub-Total<br /> (MYR)</th>
-                <th class="no-print">Action</th>
+                <th class="no-print">&nbsp;</th>
             </tr>
         </thead>
         <tbody></tbody>
@@ -103,13 +103,11 @@
         </tfoot>
     </table>
 
-    
-
     <!-- Export Buttons -->
     <div class="no-print text-center mt-3">
-		<button class="btn btn-success" onclick="addItem()">+ Add Item</button>
-        <button class="btn btn-primary" onclick="printCustomer()">Print Customer Copy</button>
-        <button class="btn btn-secondary" onclick="printOffice()">Print Office Copy</button>
+		<button class="btn btn-success bi-plus-circle" onclick="addItem()"> Add Item</button>
+        <button class="btn btn-primary bi-printer" onclick="printCustomer()"> Print Customer Copy</button>
+        <button class="btn btn-secondary bi-printer" onclick="printOffice()"> Print Office Copy</button>
     </div>
 </div>
 
@@ -139,7 +137,7 @@ function addItem() {
         '<td class="office-only"><input type="number" value="0" min="0" required class="form-control" oninput="updateRow(this)"><span class="print-only"></span></td>' +
         '<td class="subtotalSell">0.00</td>' +
         '<td class="subtotalCost office-only">0.00</td>' +
-        '<td class="no-print"><button class="btn btn-danger btn-sm" onclick="removeItem(this)">Remove</button></td>';
+        '<td class="no-print"><button class="btn btn-danger btn-sm bi-trash3" onclick="removeItem(this)"></button></td>';
     tbody.appendChild(row);
     renumberRows();
     updateTotals();
@@ -258,92 +256,86 @@ function printOffice() {
     }, 50);
 }
 
-/* Export XML */
-function exportXML() {
-    var xmlDoc = document.implementation.createDocument("", "", null);
-    var quotation = xmlDoc.createElement("quotation");
+/* Export JSON */
+function exportJSON() {
+    var data = {
+        customerName: document.getElementById("customerName").value,
+        customerContact: document.getElementById("customerContact").value,
+        quotationDate: document.getElementById("quotationDate").value,
+        agentName: document.getElementById("agentName").value,
+        items: []
+    };
 
-    ["customerName", "customerContact", "quotationDate", "agentName"].forEach(id => {
-        var el = xmlDoc.createElement(id);
-        el.textContent = document.getElementById(id).value;
-        quotation.appendChild(el);
-    });
-
-    var itemsEl = xmlDoc.createElement("items");
     var rows = document.querySelectorAll("#itemsTable tbody tr");
     rows.forEach(row => {
-        var itemEl = xmlDoc.createElement("item");
-        var product = row.cells[1].innerText;
-        var code = row.cells[2].innerText;
-        var description = row.cells[3].innerText;
-        var qty = row.querySelector('td:nth-child(5) input').value;
-        var sell = row.querySelector('td:nth-child(6) input').value;
-        var cost = row.querySelector('td:nth-child(7) input') ? row.querySelector('td:nth-child(7) input').value : 0;
-
-        [["product", product], ["code", code], ["description", description], ["qty", qty], ["sell", sell], ["cost", cost]].forEach(([k, v]) => {
-            var el = xmlDoc.createElement(k);
-            el.textContent = v;
-            itemEl.appendChild(el);
+        data.items.push({
+            product: row.cells[1].innerText,
+            code: row.cells[2].innerText,
+            description: row.cells[3].innerText,
+            qty: row.querySelector('td:nth-child(5) input').value,
+            sell: row.querySelector('td:nth-child(6) input').value,
+            cost: row.querySelector('td:nth-child(7) input') ? row.querySelector('td:nth-child(7) input').value : 0
         });
-
-        itemsEl.appendChild(itemEl);
     });
-    quotation.appendChild(itemsEl);
 
-    xmlDoc.appendChild(quotation);
+    var jsonString = JSON.stringify(data, null, 2);
 
-    var serializer = new XMLSerializer();
-    var xmlString = serializer.serializeToString(xmlDoc);
+    function clean(str) {
+        return str.replace(/[^a-z0-9_-]/gi, "_");
+    }
 
     var date = document.getElementById("quotationDate").value || "no_date";
     var customer = document.getElementById("customerName").value || "no_name";
     var contact = document.getElementById("customerContact").value || "no_contact";
     var agent = document.getElementById("agentName").value || "no_agent";
 
-    function clean(str) {
-        return str.replace(/[^a-z0-9_-]/gi, "_");
-    }
+    // Tambah timestamp hhmmss
+    var now = new Date();
+    var hh = String(now.getHours()).padStart(2, "0");
+    var mm = String(now.getMinutes()).padStart(2, "0");
+    var ss = String(now.getSeconds()).padStart(2, "0");
+    var timestamp = `${hh}${mm}${ss}`;
 
-    var filename = `${clean(date)}-${clean(customer)}-${clean(contact)}-${clean(agent)}.xml`;
+    var filename = `${clean(date)}-${timestamp}-${clean(customer)}-${clean(contact)}-${clean(agent)}.json`;
 
-    var blob = new Blob([xmlString], {type: "application/xml"});
+    var blob = new Blob([jsonString], {type: "application/json"});
     var link = document.createElement("a");
     link.href = URL.createObjectURL(blob);
     link.download = filename;
     link.click();
 }
 
-/* Import XML */
-function importXML(event) {
+/* Import JSON */
+function importJSON(event) {
     var file = event.target.files[0];
     if (!file) return;
 
     var reader = new FileReader();
     reader.onload = function(e) {
-        var parser = new DOMParser();
-        var xmlDoc = parser.parseFromString(e.target.result, "application/xml");
+        var data = JSON.parse(e.target.result);
 
-        document.getElementById("customerName").value = xmlDoc.getElementsByTagName("customerName")[0]?.textContent || "";
-        document.getElementById("customerContact").value = xmlDoc.getElementsByTagName("customerContact")[0]?.textContent || "";
-        document.getElementById("quotationDate").value = xmlDoc.getElementsByTagName("quotationDate")[0]?.textContent || "";
-        document.getElementById("agentName").value = xmlDoc.getElementsByTagName("agentName")[0]?.textContent || "";
+        document.getElementById("customerName").value = data.customerName || "";
+        document.getElementById("customerContact").value = data.customerContact || "";
+        document.getElementById("quotationDate").value = data.quotationDate || "";
+        document.getElementById("agentName").value = data.agentName || "";
         syncPrintFields();
 
         var tbody = document.querySelector("#itemsTable tbody");
         tbody.innerHTML = "";
-        var items = xmlDoc.getElementsByTagName("item");
-        for (var i = 0; i < items.length; i++) {
-            addItem();
-            var row = tbody.lastChild;
-            row.cells[1].innerText = items[i].getElementsByTagName("product")[0]?.textContent || "";
-            row.cells[2].innerText = items[i].getElementsByTagName("code")[0]?.textContent || "";
-            row.cells[3].innerText = items[i].getElementsByTagName("description")[0]?.textContent || "";
-            row.querySelector('td:nth-child(5) input').value = items[i].getElementsByTagName("qty")[0]?.textContent || 0;
-            row.querySelector('td:nth-child(6) input').value = items[i].getElementsByTagName("sell")[0]?.textContent || 0;
-            if (row.querySelector('td:nth-child(7) input')) {
-                row.querySelector('td:nth-child(7) input').value = items[i].getElementsByTagName("cost")[0]?.textContent || 0;
-            }
-            updateTotals();
+        if (data.items) {
+            data.items.forEach(item => {
+                addItem();
+                var row = tbody.lastChild;
+                row.cells[1].innerText = item.product || "";
+                row.cells[2].innerText = item.code || "";
+                row.cells[3].innerText = item.description || "";
+                row.querySelector('td:nth-child(5) input').value = item.qty || 0;
+                row.querySelector('td:nth-child(6) input').value = item.sell || 0;
+                if (row.querySelector('td:nth-child(7) input')) {
+                    row.querySelector('td:nth-child(7) input').value = item.cost || 0;
+                }
+                updateTotals();
+            });
         }
     };
     reader.readAsText(file);
