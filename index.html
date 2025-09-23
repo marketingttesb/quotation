@@ -4,10 +4,18 @@
 <meta charset="UTF-8">
 <title>TIEN TIEN Quick Quotation Generator</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
 <style>
     .no-print { margin-top: 15px; }
     .totals { font-weight: bold; }
     .print-only { display: none; }
+    .icon-btn {
+        border: none;
+        background: none;
+        font-size: 1.3rem;
+        margin-left: 8px;
+        cursor: pointer;
+    }
     @media print {
         .no-print { display: none !important; }
         input.form-control { display: none !important; }
@@ -21,7 +29,17 @@
 <div class="container" id="quotation-container">
     <div class="d-flex justify-content-between align-items-center mb-3">
         <img src="transparent_black.png" alt="Logo" style="height:80px;">
-        <h2>Quick Quotation</h2>
+        <div class="d-flex align-items-center">
+            <h2 class="mb-0">Quick Quotation</h2>
+            <!-- Export & Import icons -->
+            <button class="icon-btn no-print" title="Export Quotation" onclick="exportXML()">
+                <i class="bi bi-download"></i>
+            </button>
+            <button class="icon-btn no-print" title="Import Quotation" onclick="document.getElementById('importXML').click()">
+                <i class="bi bi-upload"></i>
+            </button>
+            <input type="file" id="importXML" class="d-none" accept=".xml" onchange="importXML(event)">
+        </div>
     </div>
 
     <!-- Customer Info (Input) -->
@@ -87,13 +105,10 @@
 
     <button class="btn btn-success no-print" onclick="addItem()">+ Add Item</button>
 
-    <!-- Export / Import / Print Buttons -->
+    <!-- Export Buttons -->
     <div class="no-print text-center mt-3">
         <button class="btn btn-primary" onclick="printCustomer()">Print Customer Copy</button>
         <button class="btn btn-secondary" onclick="printOffice()">Print Office Copy</button>
-        <button class="btn btn-info" onclick="exportXML()">Export Quotation</button>
-        <input type="file" id="importFile" class="d-none" accept=".xml" onchange="importXML(event)">
-        <button class="btn btn-warning" onclick="document.getElementById('importFile').click()">Import Quotation</button>
     </div>
 </div>
 
@@ -110,17 +125,17 @@ function syncPrintFields() {
 }
 
 /* Add / remove items */
-function addItem(data) {
+function addItem() {
     var tbody = document.getElementById("itemsTable").getElementsByTagName("tbody")[0];
     var row = document.createElement("tr");
     row.innerHTML =
         '<td class="row-number"></td>' +
-        '<td contenteditable="true">' + (data?.product || 'Item') + '</td>' +
-        '<td contenteditable="true">' + (data?.code || 'Code') + '</td>' +
-        '<td contenteditable="true">' + (data?.description || 'Description') + '</td>' +
-        '<td><input type="number" value="' + (data?.qty || 1) + '" min="1" required class="form-control" oninput="updateRow(this)"><span class="print-only"></span></td>' +
-        '<td><input type="number" value="' + (data?.sell || 0) + '" min="0" required class="form-control" oninput="updateRow(this)"><span class="print-only"></span></td>' +
-        '<td class="office-only"><input type="number" value="' + (data?.cost || 0) + '" min="0" required class="form-control" oninput="updateRow(this)"><span class="print-only"></span></td>' +
+        '<td contenteditable="true">Item</td>' +
+        '<td contenteditable="true">Code</td>' +
+        '<td contenteditable="true">Description</td>' +
+        '<td><input type="number" value="1" min="1" required class="form-control" oninput="updateRow(this)"><span class="print-only"></span></td>' +
+        '<td><input type="number" value="0" min="0" required class="form-control" oninput="updateRow(this)"><span class="print-only"></span></td>' +
+        '<td class="office-only"><input type="number" value="0" min="0" required class="form-control" oninput="updateRow(this)"><span class="print-only"></span></td>' +
         '<td class="subtotalSell">0.00</td>' +
         '<td class="subtotalCost office-only">0.00</td>' +
         '<td class="no-print"><button class="btn btn-danger btn-sm" onclick="removeItem(this)">Remove</button></td>';
@@ -198,7 +213,7 @@ function validateForm() {
     return true;
 }
 
-/* Adjust the Grand Total title colspan */
+/* Adjust the Grand Total title colspan so printed layout aligns correctly. */
 function adjustGrandTotalColspan(show) {
     var ths = document.querySelectorAll("#itemsTable thead th");
     var visibleCols = 0;
@@ -207,7 +222,6 @@ function adjustGrandTotalColspan(show) {
         if (th.classList.contains('office-only') && !show) return;
         visibleCols++;
     });
-
     var titleColspan = visibleCols - 1 - (show ? 1 : 0);
     if (titleColspan < 1) titleColspan = 1;
     var titleCell = document.getElementById('grandTotalTitle');
@@ -243,19 +257,17 @@ function printOffice() {
     }, 50);
 }
 
-/* ---------- NEW FUNCTIONS: EXPORT / IMPORT XML ---------- */
+/* Export XML */
 function exportXML() {
     var xmlDoc = document.implementation.createDocument("", "", null);
     var quotation = xmlDoc.createElement("quotation");
 
-    // customer info
     ["customerName", "customerContact", "quotationDate", "agentName"].forEach(id => {
         var el = xmlDoc.createElement(id);
         el.textContent = document.getElementById(id).value;
         quotation.appendChild(el);
     });
 
-    // items
     var itemsEl = xmlDoc.createElement("items");
     var rows = document.querySelectorAll("#itemsTable tbody tr");
     rows.forEach(row => {
@@ -282,13 +294,11 @@ function exportXML() {
     var serializer = new XMLSerializer();
     var xmlString = serializer.serializeToString(xmlDoc);
 
-    // build filename: date-customer_name-contact_no-agent_name.xml
     var date = document.getElementById("quotationDate").value || "no_date";
     var customer = document.getElementById("customerName").value || "no_name";
     var contact = document.getElementById("customerContact").value || "no_contact";
     var agent = document.getElementById("agentName").value || "no_agent";
 
-    // clean up to avoid invalid filename chars
     function clean(str) {
         return str.replace(/[^a-z0-9_-]/gi, "_");
     }
@@ -302,9 +312,11 @@ function exportXML() {
     link.click();
 }
 
+/* Import XML */
 function importXML(event) {
     var file = event.target.files[0];
     if (!file) return;
+
     var reader = new FileReader();
     reader.onload = function(e) {
         var parser = new DOMParser();
@@ -316,20 +328,21 @@ function importXML(event) {
         document.getElementById("agentName").value = xmlDoc.getElementsByTagName("agentName")[0]?.textContent || "";
         syncPrintFields();
 
-        // clear existing items
-        document.querySelector("#itemsTable tbody").innerHTML = "";
-
+        var tbody = document.querySelector("#itemsTable tbody");
+        tbody.innerHTML = "";
         var items = xmlDoc.getElementsByTagName("item");
         for (var i = 0; i < items.length; i++) {
-            var it = items[i];
-            addItem({
-                product: it.getElementsByTagName("product")[0]?.textContent || "Item",
-                code: it.getElementsByTagName("code")[0]?.textContent || "Code",
-                description: it.getElementsByTagName("description")[0]?.textContent || "Description",
-                qty: it.getElementsByTagName("qty")[0]?.textContent || 1,
-                sell: it.getElementsByTagName("sell")[0]?.textContent || 0,
-                cost: it.getElementsByTagName("cost")[0]?.textContent || 0
-            });
+            addItem();
+            var row = tbody.lastChild;
+            row.cells[1].innerText = items[i].getElementsByTagName("product")[0]?.textContent || "";
+            row.cells[2].innerText = items[i].getElementsByTagName("code")[0]?.textContent || "";
+            row.cells[3].innerText = items[i].getElementsByTagName("description")[0]?.textContent || "";
+            row.querySelector('td:nth-child(5) input').value = items[i].getElementsByTagName("qty")[0]?.textContent || 0;
+            row.querySelector('td:nth-child(6) input').value = items[i].getElementsByTagName("sell")[0]?.textContent || 0;
+            if (row.querySelector('td:nth-child(7) input')) {
+                row.querySelector('td:nth-child(7) input').value = items[i].getElementsByTagName("cost")[0]?.textContent || 0;
+            }
+            updateTotals();
         }
     };
     reader.readAsText(file);
