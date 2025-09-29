@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>TIEN TIEN Quick Quotation Generator | Beta 3.1</title>
+<title>TIEN TIEN Quick Quotation Generator | Beta 3.0</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
 <style>
@@ -77,9 +77,9 @@
                 <th>Products</th>
                 <th>Quantity</th>
                 <th>Price(RM)</th>
-                <th class="office-only">PM Price(RM)</th>
+                <th class="office-only">Selling Price(RM)</th>
                 <th>Total(RM)</th>
-                <th class="office-only">Total PM Price(RM)</th>
+                <th class="office-only">Total Selling Price(RM)</th>
                 <th class="no-print">&nbsp;</th>
             </tr>
         </thead>
@@ -257,35 +257,34 @@ function toggleOfficeCols(show) {
     updateColspans(false);
 }
 
+/* --------- printing flow --------- */
 function printCustomer() {
-    // Show customer-only row
-    document.getElementById("print-onlys").style.display = "";
-    
-    // Hide office-only columns if needed
-    let officeCols = document.querySelectorAll(".office-only");
-    officeCols.forEach(col => col.style.display = "none");
-
-    window.print();
-
-    // Reset after printing
-    officeCols.forEach(col => col.style.display = "");
-    document.getElementById("print-onlys").style.display = "none";
+    if (!validateForm()) return;
+    syncPrintFields();
+    toggleOfficeCols(false);
+    updateColspans(true);
+    document.getElementById("customerGrandCostRow").style.display = "";
+    document.getElementById("grandTotalSell").classList.add("customer-copy");
+    setTimeout(function() {
+        window.print();
+        toggleOfficeCols(true);
+        updateColspans(false);
+        document.getElementById("customerGrandCostRow").style.display = "none";
+        document.getElementById("grandTotalSell").classList.remove("customer-copy");
+    }, 60);
 }
 
 function printOffice() {
-    // Hide the discounted price row
-    document.getElementById("print-onlys").style.display = "none";
-
-    // Show office-only columns
-    let officeCols = document.querySelectorAll(".office-only");
-    officeCols.forEach(col => col.style.display = "");
-
-    window.print();
-
-    // Reset after printing
-    document.getElementById("print-onlys").style.display = "none";
+    if (!validateForm()) return;
+    syncPrintFields();
+    toggleOfficeCols(true);
+    updateColspans(false);
+    document.getElementById("customerGrandCostRow").style.display = "none";
+    document.getElementById("grandTotalSell").classList.remove("customer-copy");
+    setTimeout(function() {
+        window.print();
+    }, 60);
 }
-
 
 /* --------- export/import JSON --------- */
 function exportJSON() {
