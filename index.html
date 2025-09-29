@@ -16,7 +16,6 @@
         margin-left: 8px;
         cursor: pointer;
     }
-    /* Ensure all tables align */
     table { width: 100% !important; }
     @media print {
         .no-print { display: none !important; }
@@ -80,16 +79,14 @@
         <tbody></tbody>
         <tfoot>
             <tr>
-                <td id="grandTotalTitle" colspan="5" class="text-right totals">Grand Total: RM</td>
+                <td id="grandTotalTitle" colspan="6" class="text-right totals">Grand Total: RM</td>
                 <td id="grandTotalSell">0.00</td>
                 <td class="office-only" id="grandTotalCost">0.00</td>
-                <td class="no-print"></td>
             </tr>
-            <!-- Fixed row for customer copy -->
+            <!-- Customer copy row -->
             <tr id="customerGrandCostRow" class="print-only">
-                <td colspan="4" class="text-right totals">Discounted Total: RM</td>
+                <td colspan="5" class="text-right totals">After Less: RM</td>
                 <td id="grandTotalCostCustomer">0.00</td>
-				<td class="no-print"></td>
             </tr>
         </tfoot>
     </table>
@@ -214,27 +211,11 @@ function validateForm() {
     return true;
 }
 
-function adjustGrandTotalColspan(show) {
-    var ths = document.querySelectorAll("#itemsTable thead th");
-    var visibleCols = 0;
-    ths.forEach(function(th) {
-        if (th.classList.contains('no-print')) return;
-        if (th.classList.contains('office-only') && !show) return;
-        visibleCols++;
-    });
-    var titleColspan = visibleCols - 2;
-    if (titleColspan < 1) titleColspan = 1;
-	if (titleColspan = 4) titleColspan = 4;
-    var titleCell = document.getElementById('grandTotalTitle');
-    if (titleCell) titleCell.colSpan = titleColspan;
-}
-
 function toggleOfficeCols(show) {
     var elems = document.querySelectorAll(".office-only");
     for (var i = 0; i < elems.length; i++) {
         elems[i].style.display = show ? "" : "none";
     }
-    adjustGrandTotalColspan(show);
 }
 
 function printCustomer() {
