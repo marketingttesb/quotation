@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>TIEN TIEN Quick Quotation Generator</title>
+<title>TIEN TIEN Quick Quotation Generator Beta1.0</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
 <style>
@@ -16,6 +16,7 @@
         margin-left: 8px;
         cursor: pointer;
     }
+    /* Ensure all tables align */
     table { width: 100% !important; }
     @media print {
         .no-print { display: none !important; }
@@ -78,14 +79,17 @@
         </thead>
         <tbody></tbody>
         <tfoot>
-            <tr>
-                <td id="grandTotalTitle" colspan="6" class="text-right totals">Grand Total: RM</td>
+            <tr id="grandTotalRow">
+                <!-- colspan set dynamically -->
+                <td id="grandTotalTitle" class="text-right totals">Grand Total: RM</td>
                 <td id="grandTotalSell">0.00</td>
                 <td class="office-only" id="grandTotalCost">0.00</td>
+                <td class="no-print"></td>
             </tr>
-            <!-- Customer copy row -->
+            <!-- Fixed row for customer copy -->
             <tr id="customerGrandCostRow" class="print-only">
-                <td colspan="5" class="text-right totals">After Less: RM</td>
+                <!-- colspan set dynamically -->
+                <td id="customerGrandTitle" class="text-right totals">After Less: RM</td>
                 <td id="grandTotalCostCustomer">0.00</td>
             </tr>
         </tfoot>
@@ -115,6 +119,7 @@
 document.getElementById("quotationDate").value = new Date().toISOString().split('T')[0];
 syncPrintFields();
 
+/* --------- syncing print fields --------- */
 function syncPrintFields() {
     document.getElementById("printCustomerName").innerHTML = document.getElementById("customerName").value;
     document.getElementById("printQuotationDate").innerHTML = document.getElementById("quotationDate").value;
@@ -131,6 +136,7 @@ function syncPrintFields() {
     document.getElementById("preparedBy").innerHTML = agent ? "Quotation Prepared By: " + agent : "";
 }
 
+/* --------- items management --------- */
 function addItem() {
     var tbody = document.getElementById("itemsTable").getElementsByTagName("tbody")[0];
     var row = document.createElement("tr");
@@ -167,6 +173,7 @@ function updateRow(input) {
     updateTotals();
 }
 
+/* --------- totals --------- */
 function updateTotals() {
     var rows = document.querySelectorAll("#itemsTable tbody tr");
     var grandSell = 0;
@@ -198,8 +205,11 @@ function updateTotals() {
     document.getElementById("grandTotalSell").innerHTML = grandSell.toFixed(2);
     document.getElementById("grandTotalCost").innerHTML = grandCost.toFixed(2);
     document.getElementById("grandTotalCostCustomer").innerHTML = grandCost.toFixed(2);
+    // ensure colspan still correct if totals changed
+    updateColspans(false);
 }
 
+/* --------- form validation --------- */
 function validateForm() {
     var requiredInputs = document.querySelectorAll("input[required], select[required]");
     for (var i = 0; i < requiredInputs.length; i++) {
@@ -211,26 +221,86 @@ function validateForm() {
     return true;
 }
 
+/* --------- dynamic colspan management --------- */
+/**
+ * Calculate count of visible header columns.
+ * If printMode === true, treat .no-print headers as hidden (because @media print will hide them).
+ */
+function countVisibleHeaderCols(printMode) {
+    const ths = Array.from(document.querySelectorAll("#itemsTable thead th"));
+    let visible = 0;
+    ths.forEach(th => {
+        // If preparing for print, treat no-print as hidden even though @media print isn't active in JS
+        if (printMode && th.classList.contains('no-print')) return;
+        const style = window.getComputedStyle(th);
+        if (style.display !== 'none' && style.visibility !== 'collapse') visible++;
+    });
+    return visible;
+}
+
+/**
+ * Update colspan values for the grand total (screen) row and the customer (print-only) row.
+ * printMode = true means we're preparing for a print (so .no-print should be considered hidden).
+ */
+function updateColspans(printMode) {
+    const visibleCols = countVisibleHeaderCols(printMode);
+    // determine whether office-only header is visible (based on real style)
+    const ths = Array.from(document.querySelectorAll("#itemsTable thead th"));
+    const officeVisible = ths.some(th => th.classList.contains('office-only') && window.getComputedStyle(th).display !== 'none');
+    const actionVisible = !printMode && ths.some(th => th.classList.contains('no-print') && window.getComputedStyle(th).display !== 'none');
+
+    // For the Grand Total row on screen we keep the last columns for:
+    //   1) Grand Sell (always)
+    //   2) Grand Cost (only if officeVisible)
+    //   3) Action column (only if actionVisible)
+    const rightSideCells = 1 + (officeVisible ? 1 : 0) + (actionVisible ? 1 : 0);
+    const titleColspan = Math.max(1, visibleCols - rightSideCells);
+
+    const titleCell = document.getElementById('grandTotalTitle');
+    if (titleCell) titleCell.colSpan = titleColspan;
+
+    // For the customer (print-only) row we reserve only 1 cell on the right (grandTotalCostCustomer).
+    const customerTitle = document.getElementById('customerGrandTitle');
+    if (customerTitle) {
+        // visibleCols in printMode should already have excluded no-print; office-only should have been hidden via toggleOfficeCols(false)
+        const custColSpan = Math.max(1, visibleCols - 1);
+        customerTitle.colSpan = custColSpan;
+    }
+}
+
+/* --------- show/hide office columns --------- */
 function toggleOfficeCols(show) {
     var elems = document.querySelectorAll(".office-only");
     for (var i = 0; i < elems.length; i++) {
         elems[i].style.display = show ? "" : "none";
     }
+    updateColspans(false);
 }
 
+/* --------- printing flow --------- */
 function printCustomer() {
     if (!validateForm()) return;
     syncPrintFields();
+
+    // hide office-only (so print copy won't show them)
     toggleOfficeCols(false);
+    // update colspans treating .no-print as hidden for print preparation
+    updateColspans(true);
+
+    // show customer print-only totals row
     document.getElementById("customerGrandCostRow").style.display = "";
+
+    // small timeout to allow layout recalculation before print dialog opens
     setTimeout(function() {
         window.print();
+        // restore screen layout after print
         toggleOfficeCols(true);
+        updateColspans(false);
         document.getElementById("customerGrandCostRow").style.display = "none";
-    }, 50);
+    }, 60);
 }
 
-/* Export JSON */
+/* --------- export/import JSON --------- */
 function exportJSON() {
     var data = {
         customerName: document.getElementById("customerName").value,
@@ -271,7 +341,6 @@ function exportJSON() {
     link.click();
 }
 
-/* Import JSON */
 function importJSON(event) {
     var file = event.target.files[0];
     if (!file) return;
@@ -304,7 +373,7 @@ function importJSON(event) {
     reader.readAsText(file);
 }
 
-/* Initial setup */
+/* --------- initial setup --------- */
 document.addEventListener('DOMContentLoaded', function() {
     toggleOfficeCols(true);
     updateTotals();
