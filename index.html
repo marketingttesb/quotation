@@ -60,17 +60,26 @@
     </div>
 
     <!-- Customer Info (Print) -->
-    <table class="table table-bordered print-only mb-3" style="width:100%">
+    <!-- <table class="table table-bordered print-only mb-3" style="width:100%">
   <tr>
     <td style="width:70%"><strong>Customer Name:</strong><br /> <span id="printCustomerName"></span></td>
     <td style="width:30%"><strong>Date:</strong><br /> <span id="printQuotationDate"></span></td>
   </tr>
-</table>
+</table> -->
 
 
     <!-- Items Table -->
     <table class="table table-bordered" id="itemsTable">
         <thead class="thead-light">
+		
+			<tr class="print-only">
+			  <th colspan="8">
+				<div class="d-flex justify-content-between">
+				  <div class="col-md-9"><strong>Customer Name:</strong> <span id="printCustomerName"></span></div>
+				  <div class="col-md-3"><strong>Date:</strong> <span id="printQuotationDate"></span></div>
+				</div>
+			  </th>
+			</tr>
             <tr>
                 <th>#</th>
                 <th>Products</th>
