@@ -44,21 +44,15 @@
 
     <!-- Customer Info (Input) -->
     <div class="row mb-3 no-print">
-        <div class="col-md-6">
+        <div class="col-md-4">
             <label>Customer Name</label>
             <input type="text" id="customerName" class="form-control" required oninput="syncPrintFields()">
         </div>
-        <div class="col-md-6">
-            <label>Contact No</label>
-            <input type="text" id="customerContact" class="form-control" required oninput="syncPrintFields()">
-        </div>
-    </div>
-    <div class="row mb-3 no-print">
-        <div class="col-md-6">
+        <div class="col-md-4">
             <label>Date</label>
             <input type="date" id="quotationDate" class="form-control" required oninput="syncPrintFields()">
         </div>
-        <div class="col-md-6">
+        <div class="col-md-4">
             <label>Agent Name</label>
             <input type="text" id="agentName" class="form-control" required oninput="syncPrintFields()">
         </div>
@@ -68,9 +62,6 @@
     <table class="table table-bordered print-only mb-3">
         <tr>
             <td><strong>Customer Name:</strong><br /> <span id="printCustomerName"></span></td>
-            <td><strong>Contact No:</strong><br /> <span id="printCustomerContact"></span></td>
-        </tr>
-        <tr>
             <td><strong>Date:</strong><br /> <span id="printQuotationDate"></span></td>
             <td><strong>Agent Name:</strong><br /> <span id="printAgentName"></span></td>
         </tr>
@@ -116,7 +107,6 @@ syncPrintFields();
 /* Sync input --> print-only spans */
 function syncPrintFields() {
     document.getElementById("printCustomerName").innerHTML = document.getElementById("customerName").value;
-    document.getElementById("printCustomerContact").innerHTML = document.getElementById("customerContact").value;
     document.getElementById("printQuotationDate").innerHTML = document.getElementById("quotationDate").value;
     document.getElementById("printAgentName").innerHTML = document.getElementById("agentName").value;
 }
@@ -256,7 +246,6 @@ function printOffice() {
 function exportJSON() {
     var data = {
         customerName: document.getElementById("customerName").value,
-        customerContact: document.getElementById("customerContact").value,
         quotationDate: document.getElementById("quotationDate").value,
         agentName: document.getElementById("agentName").value,
         items: []
@@ -280,7 +269,6 @@ function exportJSON() {
 
     var date = document.getElementById("quotationDate").value || "no_date";
     var customer = document.getElementById("customerName").value || "no_name";
-    var contact = document.getElementById("customerContact").value || "no_contact";
     var agent = document.getElementById("agentName").value || "no_agent";
 
     var now = new Date();
@@ -289,7 +277,7 @@ function exportJSON() {
     var ss = String(now.getSeconds()).padStart(2, "0");
     var timestamp = `${hh}${mm}${ss}`;
 
-    var filename = `${clean(date)}-${timestamp}-${clean(customer)}-${clean(contact)}-${clean(agent)}.json`;
+    var filename = `${clean(date)}-${timestamp}-${clean(customer)}-${clean(agent)}.json`;
 
     var blob = new Blob([jsonString], {type: "application/json"});
     var link = document.createElement("a");
@@ -308,7 +296,6 @@ function importJSON(event) {
         var data = JSON.parse(e.target.result);
 
         document.getElementById("customerName").value = data.customerName || "";
-        document.getElementById("customerContact").value = data.customerContact || "";
         document.getElementById("quotationDate").value = data.quotationDate || "";
         document.getElementById("agentName").value = data.agentName || "";
         syncPrintFields();
