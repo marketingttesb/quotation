@@ -19,7 +19,7 @@
     @media print {
         .no-print { display: none !important; }
         input.form-control, select.form-control { display: none !important; }
-        .print-only { display: table !important; }
+        .print-only { display: table-row !important; }
         .form-control { border: none !important; }
     }
 </style>
@@ -58,7 +58,6 @@
         <tr>
             <td><strong>Customer Name:</strong><br /> <span id="printCustomerName"></span></td>
             <td><strong>Date:</strong><br /> <span id="printQuotationDate"></span></td>
-            <!-- <td><strong>Agent Name:</strong><br /> <span id="printAgentName"></span></td> -->
         </tr>
     </table>
 
@@ -84,15 +83,11 @@
                 <td class="office-only" id="grandTotalCost">0.00</td>
                 <td class="no-print"></td>
             </tr>
-            <!-- Extra row for customer copy: cost total -->
-			
-			<tr id="customerGrandCostRow" class="print-only">
-                <td id="grandTotalTitle" class="text-right totals">Discounted Total: RM</td>
+            <!-- Fixed row for customer copy -->
+            <tr id="customerGrandCostRow" class="print-only">
+                <td colspan="5" class="text-right totals">Discounted Total: RM</td>
                 <td id="grandTotalCostCustomer">0.00</td>
-                <td class="no-print"></td>
-                <td class="no-print"></td>
             </tr>
-			
         </tfoot>
     </table>
 
@@ -112,7 +107,6 @@
         <div class="align-items-right">
             <button class="btn btn-success bi-plus-circle mr-2" onclick="addItem()"> Add Item</button>
             <button class="btn btn-primary bi-printer mr-2" onclick="printCustomer()"> Print Quotation</button>
-            <!-- <button class="btn btn-secondary bi-printer" onclick="printOffice()"> Print Office Copy</button> -->
         </div>
     </div>
 </div>
@@ -121,13 +115,10 @@
 document.getElementById("quotationDate").value = new Date().toISOString().split('T')[0];
 syncPrintFields();
 
-/* Sync input --> print-only spans */
 function syncPrintFields() {
     document.getElementById("printCustomerName").innerHTML = document.getElementById("customerName").value;
     document.getElementById("printQuotationDate").innerHTML = document.getElementById("quotationDate").value;
-    //document.getElementById("printAgentName").innerHTML = document.getElementById("agentName").value;
 
-    // Validity (2 weeks)
     let dateVal = document.getElementById("quotationDate").value;
     if (dateVal) {
         let d = new Date(dateVal);
@@ -135,12 +126,11 @@ function syncPrintFields() {
         let options = { year: 'numeric', month: 'long', day: '2-digit' };
         document.getElementById("quotationValidity").innerHTML = "This quotation valid until " + d.toLocaleDateString('en-GB', options);
     }
-    // Prepared By
+
     let agent = document.getElementById("agentName").value;
     document.getElementById("preparedBy").innerHTML = agent ? "Quotation Prepared By: " + agent : "";
 }
 
-/* Add / remove items */
 function addItem() {
     var tbody = document.getElementById("itemsTable").getElementsByTagName("tbody")[0];
     var row = document.createElement("tr");
@@ -210,7 +200,6 @@ function updateTotals() {
     document.getElementById("grandTotalCostCustomer").innerHTML = grandCost.toFixed(2);
 }
 
-/* Validation */
 function validateForm() {
     var requiredInputs = document.querySelectorAll("input[required], select[required]");
     for (var i = 0; i < requiredInputs.length; i++) {
@@ -230,7 +219,7 @@ function adjustGrandTotalColspan(show) {
         if (th.classList.contains('office-only') && !show) return;
         visibleCols++;
     });
-    var titleColspan = visibleCols - 1 - (show ? 1 : 0);
+    var titleColspan = visibleCols - 1;
     if (titleColspan < 1) titleColspan = 1;
     var titleCell = document.getElementById('grandTotalTitle');
     if (titleCell) titleCell.colSpan = titleColspan;
@@ -254,14 +243,6 @@ function printCustomer() {
         toggleOfficeCols(true);
         document.getElementById("customerGrandCostRow").style.display = "none";
     }, 50);
-}
-
-function printOffice() {
-    if (!validateForm()) return;
-    syncPrintFields();
-    toggleOfficeCols(true);
-    document.getElementById("customerGrandCostRow").style.display = "none";
-    setTimeout(function() { window.print(); }, 50);
 }
 
 /* Export JSON */
@@ -343,7 +324,6 @@ document.addEventListener('DOMContentLoaded', function() {
     toggleOfficeCols(true);
     updateTotals();
 
-    // Load agents from root agent.json
     fetch("agent.json")
         .then(res => res.json())
         .then(data => {
