@@ -71,9 +71,9 @@
                 <th>Products</th>
                 <th>Quantity</th>
                 <th>Price(RM)</th>
-                <th class="office-only">Discount Price(RM)</th>
+                <th class="office-only">Less Price(RM)</th>
                 <th>Total(RM)</th>
-                <th class="office-only">Discount Total(RM)</th>
+                <th class="office-only">Less Total(RM)</th>
                 <th class="no-print">&nbsp;</th>
             </tr>
         </thead>
@@ -82,12 +82,14 @@
             <tr>
                 <td id="grandTotalTitle" colspan="5" class="text-right totals">Grand Total: RM</td>
                 <td id="grandTotalSell">0.00</td>
-                <td class="office-only" id="grandTotalCost"><s>0.00</s></td>
+                <td class="office-only" id="grandTotalCost">0.00</td>
+                <td class="no-print"></td>
             </tr>
             <!-- Fixed row for customer copy -->
             <tr id="customerGrandCostRow" class="print-only">
-                <td colspan="4" class="text-right totals">After Less: RM</td>
+                <td colspan="4" class="text-right totals">Discounted Total: RM</td>
                 <td id="grandTotalCostCustomer">0.00</td>
+				<td class="no-print"></td>
             </tr>
         </tfoot>
     </table>
