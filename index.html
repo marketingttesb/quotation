@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>TIEN TIEN Quick Quotation Generator | Beta 2.9</title>
+<title>TIEN TIEN Quick Quotation Generator | Beta 3.0</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
 <style>
@@ -17,17 +17,15 @@
         margin-left: 8px;
         cursor: pointer;
     }
-    /* Ensure all tables align */
     table { width: 100% !important; }
     @media print {
         .no-print { display: none !important; }
         input.form-control, select.form-control { display: none !important; }
         .print-onlys { display: table-row !important; }
 		.print-only { display: flex !important; justify-content: space-between; }
-		
         .form-control { border: none !important; }
 		/* strike through the Grand Total sell value in customer copy */
-		#grandTotalSell {
+		#grandTotalSell.customer-copy {
 			text-decoration: line-through;
 		}
 		#cust-table{
@@ -70,19 +68,6 @@
 		<div><strong>Customer Name:</strong> <span id="printCustomerName"></span></div>
 		<div><strong>Date:</strong> <span id="printQuotationDate"></span></div>
 	</div>
-	
-	
-  <!--   <table class="print-only" id="cust-table">
-	  <tr>
-		<td style="width:70%"><strong>Customer Name:</strong></td>
-		<td style="width:30%"><strong>Date:</strong></td>
-	  </tr>
-	  <tr>
-		<td><span id="printCustomerName"></span></td>
-		<td><span id="printQuotationDate"></span></td>
-	  </tr>
-	</table> -->
-
 
     <!-- Items Table -->
     <table class="table table-bordered" id="itemsTable">
@@ -101,7 +86,6 @@
         <tbody></tbody>
         <tfoot>
             <tr id="grandTotalRow">
-                <!-- colspan set dynamically -->
                 <td id="grandTotalTitle" class="text-right totals">Grand Total: RM</td>
                 <td id="grandTotalSell">0.00</td>
                 <td class="office-only" id="grandTotalCost">0.00</td>
@@ -109,7 +93,6 @@
             </tr>
             <!-- Fixed row for customer copy -->
             <tr id="customerGrandCostRow" class="print-onlys">
-                <!-- colspan set dynamically -->
                 <td id="customerGrandTitle" class="text-right totals">Discounted Price: RM</td>
                 <td id="grandTotalCostCustomer">0.00</td>
             </tr>
@@ -131,7 +114,8 @@
         </div>
         <div class="align-items-right">
             <button class="btn btn-success bi-plus-circle mr-2" onclick="addItem()"> Add Item</button>
-            <button class="btn btn-primary bi-printer mr-2" onclick="printCustomer()"> Print Quotation</button>
+            <button class="btn btn-primary bi-printer mr-2" onclick="printCustomer()"> Print Customer Copy</button>
+            <button class="btn btn-warning bi-printer mr-2" onclick="printOffice()"> Print Office Copy</button>
         </div>
     </div>
 </div>
@@ -226,7 +210,6 @@ function updateTotals() {
     document.getElementById("grandTotalSell").innerHTML = grandSell.toFixed(2);
     document.getElementById("grandTotalCost").innerHTML = grandCost.toFixed(2);
     document.getElementById("grandTotalCostCustomer").innerHTML = grandCost.toFixed(2);
-    // ensure colspan still correct if totals changed
     updateColspans(false);
 }
 
@@ -243,30 +226,8 @@ function validateForm() {
 }
 
 /* --------- dynamic colspan management --------- */
-/**
- * Calculate count of visible header columns.
- * If printMode === true, treat .no-print headers as hidden (because @media print will hide them).
- */
-function countVisibleHeaderCols(printMode) {
-    const ths = Array.from(document.querySelectorAll("#itemsTable thead th"));
-    let visible = 0;
-    ths.forEach(th => {
-        // If preparing for print, treat no-print as hidden even though @media print isn't active in JS
-        if (printMode && th.classList.contains('no-print')) return;
-        const style = window.getComputedStyle(th);
-        if (style.display !== 'none' && style.visibility !== 'collapse') visible++;
-    });
-    return visible;
-}
-
-/**
- * Update colspan values for the grand total (screen) row and the customer (print-only) row.
- * printMode = true means we're preparing for a print (so .no-print should be considered hidden).
- */
 function updateColspans(printMode) {
     const ths = Array.from(document.querySelectorAll("#itemsTable thead th"));
-
-    // count visible columns properly
     let visible = 0;
     ths.forEach(th => {
         if (printMode && th.classList.contains('no-print')) return;
@@ -274,19 +235,14 @@ function updateColspans(printMode) {
         const style = window.getComputedStyle(th);
         if (style.display !== 'none' && style.visibility !== 'collapse') visible++;
     });
-
-    // ----- Grand Total row (screen) -----
     const officeVisible = ths.some(th => th.classList.contains('office-only') && window.getComputedStyle(th).display !== 'none');
     const actionVisible = !printMode && ths.some(th => th.classList.contains('no-print') && window.getComputedStyle(th).display !== 'none');
     const rightSideCells = 1 + (officeVisible ? 1 : 0) + (actionVisible ? 1 : 0);
     const titleColspan = Math.max(1, visible - rightSideCells);
-
     const titleCell = document.getElementById('grandTotalTitle');
     if (titleCell) titleCell.colSpan = titleColspan;
-
-    // ----- Discounted Price row (print only) -----
     if (printMode) {
-        const custColSpan = Math.max(1, visible - 1); // always leave last column for grandTotalCostCustomer
+        const custColSpan = Math.max(1, visible - 1);
         const customerTitle = document.getElementById('customerGrandTitle');
         if (customerTitle) customerTitle.colSpan = custColSpan;
     }
@@ -305,22 +261,28 @@ function toggleOfficeCols(show) {
 function printCustomer() {
     if (!validateForm()) return;
     syncPrintFields();
-
-    // hide office-only (so print copy won't show them)
     toggleOfficeCols(false);
-    // update colspans treating .no-print as hidden for print preparation
     updateColspans(true);
-
-    // show customer print-only totals row
     document.getElementById("customerGrandCostRow").style.display = "";
-
-    // small timeout to allow layout recalculation before print dialog opens
+    document.getElementById("grandTotalSell").classList.add("customer-copy");
     setTimeout(function() {
         window.print();
-        // restore screen layout after print
         toggleOfficeCols(true);
         updateColspans(false);
         document.getElementById("customerGrandCostRow").style.display = "none";
+        document.getElementById("grandTotalSell").classList.remove("customer-copy");
+    }, 60);
+}
+
+function printOffice() {
+    if (!validateForm()) return;
+    syncPrintFields();
+    toggleOfficeCols(true);
+    updateColspans(false);
+    document.getElementById("customerGrandCostRow").style.display = "none";
+    document.getElementById("grandTotalSell").classList.remove("customer-copy");
+    setTimeout(function() {
+        window.print();
     }, 60);
 }
 
@@ -332,7 +294,6 @@ function exportJSON() {
         agentName: document.getElementById("agentName").value,
         items: []
     };
-
     var rows = document.querySelectorAll("#itemsTable tbody tr");
     rows.forEach(row => {
         data.items.push({
@@ -342,22 +303,17 @@ function exportJSON() {
             cost: row.querySelector('td:nth-child(5) input') ? row.querySelector('td:nth-child(5) input').value : 0
         });
     });
-
     var jsonString = JSON.stringify(data, null, 2);
     function clean(str) { return str.replace(/[^a-z0-9_-]/gi, "_"); }
-
     var date = document.getElementById("quotationDate").value || "no_date";
     var customer = document.getElementById("customerName").value || "no_name";
     var agent = document.getElementById("agentName").value || "no_agent";
-
     var now = new Date();
     var hh = String(now.getHours()).padStart(2, "0");
     var mm = String(now.getMinutes()).padStart(2, "0");
     var ss = String(now.getSeconds()).padStart(2, "0");
     var timestamp = `${hh}${mm}${ss}`;
-
     var filename = `${clean(date)}-${timestamp}-${clean(customer)}-${clean(agent)}.json`;
-
     var blob = new Blob([jsonString], {type: "application/json"});
     var link = document.createElement("a");
     link.href = URL.createObjectURL(blob);
@@ -368,16 +324,13 @@ function exportJSON() {
 function importJSON(event) {
     var file = event.target.files[0];
     if (!file) return;
-
     var reader = new FileReader();
     reader.onload = function(e) {
         var data = JSON.parse(e.target.result);
-
         document.getElementById("customerName").value = data.customerName || "";
         document.getElementById("quotationDate").value = data.quotationDate || "";
         document.getElementById("agentName").value = data.agentName || "";
         syncPrintFields();
-
         var tbody = document.querySelector("#itemsTable tbody");
         tbody.innerHTML = "";
         if (data.items) {
@@ -401,7 +354,6 @@ function importJSON(event) {
 document.addEventListener('DOMContentLoaded', function() {
     toggleOfficeCols(true);
     updateTotals();
-
     fetch("agent.json")
         .then(res => res.json())
         .then(data => {
