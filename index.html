@@ -263,28 +263,31 @@ function countVisibleHeaderCols(printMode) {
  * printMode = true means we're preparing for a print (so .no-print should be considered hidden).
  */
 function updateColspans(printMode) {
-    const visibleCols = countVisibleHeaderCols(printMode);
-    // determine whether office-only header is visible (based on real style)
     const ths = Array.from(document.querySelectorAll("#itemsTable thead th"));
+
+    // count visible columns properly
+    let visible = 0;
+    ths.forEach(th => {
+        if (printMode && th.classList.contains('no-print')) return;
+        if (printMode && th.classList.contains('office-only')) return;
+        const style = window.getComputedStyle(th);
+        if (style.display !== 'none' && style.visibility !== 'collapse') visible++;
+    });
+
+    // ----- Grand Total row (screen) -----
     const officeVisible = ths.some(th => th.classList.contains('office-only') && window.getComputedStyle(th).display !== 'none');
     const actionVisible = !printMode && ths.some(th => th.classList.contains('no-print') && window.getComputedStyle(th).display !== 'none');
-
-    // For the Grand Total row on screen we keep the last columns for:
-    //   1) Grand Sell (always)
-    //   2) Grand Cost (only if officeVisible)
-    //   3) Action column (only if actionVisible)
     const rightSideCells = 1 + (officeVisible ? 1 : 0) + (actionVisible ? 1 : 0);
-    const titleColspan = Math.max(1, visibleCols - rightSideCells);
+    const titleColspan = Math.max(1, visible - rightSideCells);
 
     const titleCell = document.getElementById('grandTotalTitle');
     if (titleCell) titleCell.colSpan = titleColspan;
 
-    // For the customer (print-only) row we reserve only 1 cell on the right (grandTotalCostCustomer).
-    const customerTitle = document.getElementById('customerGrandTitle');
-    if (customerTitle) {
-        // visibleCols in printMode should already have excluded no-print; office-only should have been hidden via toggleOfficeCols(false)
-        const custColSpan = Math.max(1, visibleCols - 1);
-        customerTitle.colSpan = custColSpan;
+    // ----- Discounted Price row (print only) -----
+    if (printMode) {
+        const custColSpan = Math.max(1, visible - 1); // always leave last column for grandTotalCostCustomer
+        const customerTitle = document.getElementById('customerGrandTitle');
+        if (customerTitle) customerTitle.colSpan = custColSpan;
     }
 }
 
