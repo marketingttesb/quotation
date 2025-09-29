@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>TIEN TIEN Quick Quotation Generator | Beta 2.4</title>
+<title>TIEN TIEN Quick Quotation Generator | Beta 2.5</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
 <style>
@@ -21,7 +21,9 @@
     @media print {
         .no-print { display: none !important; }
         input.form-control, select.form-control { display: none !important; }
-        .print-only { display: table-row !important; }
+        /*.print-only { display: table-row !important; }*/
+		.print-only { display: flex !important; justify-content: space-between; }
+		
         .form-control { border: none !important; }
 		/* strike through the Grand Total sell value in customer copy */
 		#grandTotalSell {
@@ -63,16 +65,10 @@
     </div>
 
     <!-- Customer Info (Print) -->
-	<div class="d-flex justify-content-between mb-3 print-only">
-        <div class="col-md-9">
-            <strong>Customer Name:</strong> <br />
-            <span id="printCustomerName"></span>
-        </div>
-        <div class="col-md-3">
-            <strong>Date:</strong> <br />
-            <span id="printQuotationDate"></span>
-        </div>
-    </div>
+	<div class="print-only mb-3 w-100">
+		<div><strong>Customer Name:</strong> <span id="printCustomerName"></span></div>
+		<div><strong>Date:</strong> <span id="printQuotationDate"></span></div>
+	</div>
 	
 	
   <!--   <table class="print-only" id="cust-table">
