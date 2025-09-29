@@ -18,7 +18,7 @@
     }
     @media print {
         .no-print { display: none !important; }
-        input.form-control { display: none !important; }
+        input.form-control, select.form-control { display: none !important; }
         .print-only { display: table !important; }
         .form-control { border: none !important; }
     }
@@ -31,7 +31,6 @@
         <img src="transparent_black.png" alt="Logo" style="height:80px;">
         <div class="d-flex align-items-center">
             <h2 class="mb-0">Quick Quotation</h2>
-            <!-- Export & Import icons -->
             <button class="icon-btn no-print" title="Export Quotation" onclick="exportJSON()">
                 <i class="bi bi-download"></i>
             </button>
@@ -44,17 +43,13 @@
 
     <!-- Customer Info (Input) -->
     <div class="row mb-3 no-print">
-        <div class="col-md-4">
+        <div class="col-md-6">
             <label>Customer Name</label>
             <input type="text" id="customerName" class="form-control" required oninput="syncPrintFields()">
         </div>
-        <div class="col-md-4">
+        <div class="col-md-6">
             <label>Date</label>
             <input type="date" id="quotationDate" class="form-control" required oninput="syncPrintFields()">
-        </div>
-        <div class="col-md-4">
-            <label>Agent Name</label>
-            <input type="text" id="agentName" class="form-control" required oninput="syncPrintFields()">
         </div>
     </div>
 
@@ -89,14 +84,34 @@
                 <td class="office-only" id="grandTotalCost">0.00</td>
                 <td class="no-print"></td>
             </tr>
+            <!-- Extra row for customer copy: cost total -->
+            <tr id="customerGrandCostRow" class="print-only">
+                <td colspan="5" class="text-right totals">Cost Grand Total (For Customer Copy): MYR</td>
+                <td id="grandTotalCostCustomer">0.00</td>
+                <td colspan="2"></td>
+            </tr>
         </tfoot>
     </table>
 
-    <!-- Export Buttons -->
-    <div class="no-print text-center mt-3">
-		<button class="btn btn-success bi-plus-circle" onclick="addItem()"> Add Item</button>
-        <button class="btn btn-primary bi-printer" onclick="printCustomer()"> Print Customer Copy</button>
-        <button class="btn btn-secondary bi-printer" onclick="printOffice()"> Print Office Copy</button>
+    <!-- Terms & Prepared By (Print Only) -->
+    <div class="print-only mt-3">
+        <p id="quotationValidity" class="font-italic"></p>
+        <p><strong id="preparedBy"></strong></p>
+    </div>
+
+    <!-- Bottom Controls -->
+    <div class="no-print d-flex align-items-center mt-3">
+        <div class="mr-3">
+            <label>Agent Name</label>
+            <select id="agentName" class="form-control" required onchange="syncPrintFields()">
+                <option value="">Please Select An Agent</option>
+            </select>
+        </div>
+        <div>
+            <button class="btn btn-success bi-plus-circle mr-2" onclick="addItem()"> Add Item</button>
+            <button class="btn btn-primary bi-printer mr-2" onclick="printCustomer()"> Print Customer Copy</button>
+            <button class="btn btn-secondary bi-printer" onclick="printOffice()"> Print Office Copy</button>
+        </div>
     </div>
 </div>
 
@@ -109,6 +124,18 @@ function syncPrintFields() {
     document.getElementById("printCustomerName").innerHTML = document.getElementById("customerName").value;
     document.getElementById("printQuotationDate").innerHTML = document.getElementById("quotationDate").value;
     document.getElementById("printAgentName").innerHTML = document.getElementById("agentName").value;
+
+    // Validity (2 weeks)
+    let dateVal = document.getElementById("quotationDate").value;
+    if (dateVal) {
+        let d = new Date(dateVal);
+        d.setDate(d.getDate() + 14);
+        let options = { year: 'numeric', month: 'long', day: '2-digit' };
+        document.getElementById("quotationValidity").innerHTML = "This quotation valid until " + d.toLocaleDateString('en-GB', options);
+    }
+    // Prepared By
+    let agent = document.getElementById("agentName").value;
+    document.getElementById("preparedBy").innerHTML = agent ? "Quotation Prepared By: " + agent : "";
 }
 
 /* Add / remove items */
@@ -135,7 +162,6 @@ function removeItem(button) {
     updateTotals();
 }
 
-/* Row numbers */
 function renumberRows() {
     var rows = document.querySelectorAll("#itemsTable tbody tr");
     for (var i = 0; i < rows.length; i++) {
@@ -143,14 +169,12 @@ function renumberRows() {
     }
 }
 
-/* Update print spans and totals when input changes */
 function updateRow(input) {
     var span = input.nextElementSibling;
     span.innerHTML = input.value;
     updateTotals();
 }
 
-/* Totals calculation */
 function updateTotals() {
     var rows = document.querySelectorAll("#itemsTable tbody tr");
     var grandSell = 0;
@@ -159,10 +183,7 @@ function updateTotals() {
     for (var i = 0; i < rows.length; i++) {
         var qty = parseFloat(rows[i].querySelector('td:nth-child(3) input').value) || 0;
         var sell = parseFloat(rows[i].querySelector('td:nth-child(4) input').value) || 0;
-        var cost = 0;
-        if (rows[i].querySelector('td:nth-child(5) input')) {
-            cost = parseFloat(rows[i].querySelector('td:nth-child(5) input').value) || 0;
-        }
+        var cost = rows[i].querySelector('td:nth-child(5) input') ? parseFloat(rows[i].querySelector('td:nth-child(5) input').value) || 0 : 0;
 
         rows[i].querySelector('td:nth-child(3) span').innerHTML = qty;
         rows[i].querySelector('td:nth-child(4) span').innerHTML = sell.toFixed(2);
@@ -184,11 +205,12 @@ function updateTotals() {
 
     document.getElementById("grandTotalSell").innerHTML = grandSell.toFixed(2);
     document.getElementById("grandTotalCost").innerHTML = grandCost.toFixed(2);
+    document.getElementById("grandTotalCostCustomer").innerHTML = grandCost.toFixed(2);
 }
 
-/* Simple required-field validation */
+/* Validation */
 function validateForm() {
-    var requiredInputs = document.querySelectorAll("input[required]");
+    var requiredInputs = document.querySelectorAll("input[required], select[required]");
     for (var i = 0; i < requiredInputs.length; i++) {
         if (!requiredInputs[i].value) {
             alert("Please fill all required fields.");
@@ -198,7 +220,6 @@ function validateForm() {
     return true;
 }
 
-/* Adjust the Grand Total title colspan so printed layout aligns correctly. */
 function adjustGrandTotalColspan(show) {
     var ths = document.querySelectorAll("#itemsTable thead th");
     var visibleCols = 0;
@@ -213,7 +234,6 @@ function adjustGrandTotalColspan(show) {
     if (titleCell) titleCell.colSpan = titleColspan;
 }
 
-/* Toggle display of office-only columns */
 function toggleOfficeCols(show) {
     var elems = document.querySelectorAll(".office-only");
     for (var i = 0; i < elems.length; i++) {
@@ -222,14 +242,15 @@ function toggleOfficeCols(show) {
     adjustGrandTotalColspan(show);
 }
 
-/* Print flows */
 function printCustomer() {
     if (!validateForm()) return;
     syncPrintFields();
     toggleOfficeCols(false);
+    document.getElementById("customerGrandCostRow").style.display = "";
     setTimeout(function() {
         window.print();
         toggleOfficeCols(true);
+        document.getElementById("customerGrandCostRow").style.display = "none";
     }, 50);
 }
 
@@ -237,9 +258,8 @@ function printOffice() {
     if (!validateForm()) return;
     syncPrintFields();
     toggleOfficeCols(true);
-    setTimeout(function() {
-        window.print();
-    }, 50);
+    document.getElementById("customerGrandCostRow").style.display = "none";
+    setTimeout(function() { window.print(); }, 50);
 }
 
 /* Export JSON */
@@ -262,10 +282,7 @@ function exportJSON() {
     });
 
     var jsonString = JSON.stringify(data, null, 2);
-
-    function clean(str) {
-        return str.replace(/[^a-z0-9_-]/gi, "_");
-    }
+    function clean(str) { return str.replace(/[^a-z0-9_-]/gi, "_"); }
 
     var date = document.getElementById("quotationDate").value || "no_date";
     var customer = document.getElementById("customerName").value || "no_name";
@@ -323,6 +340,20 @@ function importJSON(event) {
 document.addEventListener('DOMContentLoaded', function() {
     toggleOfficeCols(true);
     updateTotals();
+
+    // Load agents from root agent.json
+    fetch("agent.json")
+        .then(res => res.json())
+        .then(data => {
+            let select = document.getElementById("agentName");
+            data.forEach(agent => {
+                let opt = document.createElement("option");
+                opt.value = agent.name;
+                opt.textContent = agent.name;
+                select.appendChild(opt);
+            });
+        })
+        .catch(err => console.error("Error loading agent.json", err));
 });
 </script>
 
