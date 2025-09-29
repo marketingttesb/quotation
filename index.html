@@ -16,6 +16,8 @@
         margin-left: 8px;
         cursor: pointer;
     }
+    /* Ensure all tables align */
+    table { width: 100% !important; }
     @media print {
         .no-print { display: none !important; }
         input.form-control, select.form-control { display: none !important; }
@@ -93,8 +95,8 @@
 
     <!-- Terms & Prepared By (Print Only) -->
     <div class="print-only mt-3">
-        <p id="quotationValidity" class="font-italic"></p>
-        <p><strong id="preparedBy"></strong></p>
+        <p id="quotationValidity" class="font-weight-bold"></p>
+        <p id="preparedBy"></p>
     </div>
 
     <!-- Bottom Controls -->
