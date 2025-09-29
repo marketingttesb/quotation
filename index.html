@@ -80,16 +80,16 @@
         <tbody></tbody>
         <tfoot>
             <tr>
-                <td id="grandTotalTitle" colspan="4" class="text-right totals">Grand Total: RM</td>
+                <td id="grandTotalTitle" colspan="5" class="text-right totals">Grand Total: RM</td>
                 <td id="grandTotalSell">0.00</td>
                 <td class="office-only" id="grandTotalCost">0.00</td>
-                <!-- <td class="no-print"></td> -->
+                <td class="no-print"></td>
             </tr>
             <!-- Fixed row for customer copy -->
             <tr id="customerGrandCostRow" class="print-only">
                 <td colspan="4" class="text-right totals">Discounted Total: RM</td>
                 <td id="grandTotalCostCustomer">0.00</td>
-				<!-- <td class="no-print"></td> -->
+				<td class="no-print"></td>
             </tr>
         </tfoot>
     </table>
@@ -225,7 +225,8 @@ function adjustGrandTotalColspan(show) {
     var titleColspan = visibleCols - 1;
     if (titleColspan < 1) titleColspan = 1;
     var titleCell = document.getElementById('grandTotalTitle');
-    if (titleCell) titleCell.colSpan = titleColspan;
+    //if (titleCell) titleCell.colSpan = titleColspan;
+	var titleColspan = 5;
 }
 
 function toggleOfficeCols(show) {
