@@ -2,13 +2,14 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>TIEN TIEN Quick Quotation Generator | Beta 2.5</title>
+<title>TIEN TIEN Quick Quotation Generator | Beta 2.7</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
 <style>
     .no-print { margin-top: 15px; }
     .totals { font-weight: bold; }
     .print-only { display: none; }
+	.print-onlys { display: none; }
     .icon-btn {
         border: none;
         background: none;
@@ -21,7 +22,7 @@
     @media print {
         .no-print { display: none !important; }
         input.form-control, select.form-control { display: none !important; }
-        /*.print-only { display: table-row !important; }*/
+        .print-onlys { display: table-row !important; }
 		.print-only { display: flex !important; justify-content: space-between; }
 		
         .form-control { border: none !important; }
@@ -107,7 +108,7 @@
                 <td class="no-print"></td>
             </tr>
             <!-- Fixed row for customer copy -->
-            <tr id="customerGrandCostRow" class="print-only">
+            <tr id="customerGrandCostRow" class="print-onlys">
                 <!-- colspan set dynamically -->
                 <td id="customerGrandTitle" class="text-right totals">Discounted Price: RM</td>
                 <td id="grandTotalCostCustomer">0.00</td>
