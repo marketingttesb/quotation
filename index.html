@@ -222,11 +222,10 @@ function adjustGrandTotalColspan(show) {
         if (th.classList.contains('office-only') && !show) return;
         visibleCols++;
     });
-    var titleColspan = visibleCols - 1;
+    var titleColspan = visibleCols - 2;
     if (titleColspan < 1) titleColspan = 1;
     var titleCell = document.getElementById('grandTotalTitle');
-    //if (titleCell) titleCell.colSpan = titleColspan;
-	var titleColspan = 5;
+    if (titleCell) titleCell.colSpan = titleColspan;
 }
 
 function toggleOfficeCols(show) {
