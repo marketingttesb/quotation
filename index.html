@@ -224,6 +224,7 @@ function adjustGrandTotalColspan(show) {
     });
     var titleColspan = visibleCols - 2;
     if (titleColspan < 1) titleColspan = 1;
+	if (titleColspan = 4) titleColspan = 5;
     var titleCell = document.getElementById('grandTotalTitle');
     if (titleCell) titleCell.colSpan = titleColspan;
 }
