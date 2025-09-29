@@ -58,7 +58,7 @@
         <tr>
             <td><strong>Customer Name:</strong><br /> <span id="printCustomerName"></span></td>
             <td><strong>Date:</strong><br /> <span id="printQuotationDate"></span></td>
-            <td><strong>Agent Name:</strong><br /> <span id="printAgentName"></span></td>
+            <!-- <td><strong>Agent Name:</strong><br /> <span id="printAgentName"></span></td> -->
         </tr>
     </table>
 
@@ -103,7 +103,6 @@
     <!-- Bottom Controls -->
     <div class="no-print d-flex align-items-center mt-3">
         <div class="mr-3">
-            <label>Agent Name</label>
             <select id="agentName" class="form-control" required onchange="syncPrintFields()">
                 <option value="">Please Select An Agent</option>
             </select>
