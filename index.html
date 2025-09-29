@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>TIEN TIEN Quick Quotation Generator | Beta 2.7</title>
+<title>TIEN TIEN Quick Quotation Generator | Beta 2.8</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
 <style>
@@ -150,11 +150,11 @@ function syncPrintFields() {
         let d = new Date(dateVal);
         d.setDate(d.getDate() + 14);
         let options = { year: 'numeric', month: 'long', day: '2-digit' };
-        document.getElementById("quotationValidity").innerHTML = "This quotation valid until " + d.toLocaleDateString('en-GB', options);
+        document.getElementById("quotationValidity").innerHTML = "*This quotation valid until " + d.toLocaleDateString('en-GB', options);
     }
 
     let agent = document.getElementById("agentName").value;
-    document.getElementById("preparedBy").innerHTML = agent ? "Quotation Prepared By: " + agent : "";
+    document.getElementById("preparedBy").innerHTML = agent ? "Prepared By: " + agent : "";
 }
 
 /* --------- items management --------- */
