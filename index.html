@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>TIEN TIEN Quick Quotation Generator | Beta 2.2</title>
+<title>TIEN TIEN Quick Quotation Generator | Beta 2.3</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
 <style>
@@ -65,14 +65,26 @@
     <!-- Customer Info (Print) -->
 	<div class="row mb-3 print-only">
         <div class="col-md-9">
-            <label>Customer Name</label> <br />
+            <strong>Customer Name:</strong> <br />
             <span id="printCustomerName"></span>
         </div>
         <div class="col-md-3">
-            <label>Date</label> <br />
+            <strong>Date:</strong> <br />
             <span id="printQuotationDate"></span>
         </div>
     </div>
+	
+	
+  <!--   <table class="print-only" id="cust-table">
+	  <tr>
+		<td style="width:70%"><strong>Customer Name:</strong></td>
+		<td style="width:30%"><strong>Date:</strong></td>
+	  </tr>
+	  <tr>
+		<td><span id="printCustomerName"></span></td>
+		<td><span id="printQuotationDate"></span></td>
+	  </tr>
+	</table> -->
 
 
     <!-- Items Table -->
