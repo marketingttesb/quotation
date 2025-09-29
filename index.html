@@ -82,8 +82,6 @@
             <tr>
                 <th>#</th>
                 <th>Products</th>
-                <th>Codes</th>
-                <th>Descriptions</th>
                 <th>Quantity</th>
                 <th>Selling Price<br /> (MYR)</th>
                 <th class="office-only">Cost Price<br /> (MYR)</th>
@@ -95,7 +93,7 @@
         <tbody></tbody>
         <tfoot>
             <tr>
-                <td id="grandTotalTitle" colspan="7" class="text-right totals">Grand Total: MYR</td>
+                <td id="grandTotalTitle" colspan="5" class="text-right totals">Grand Total: MYR</td>
                 <td id="grandTotalSell">0.00</td>
                 <td class="office-only" id="grandTotalCost">0.00</td>
                 <td class="no-print"></td>
@@ -130,8 +128,6 @@ function addItem() {
     row.innerHTML =
         '<td class="row-number"></td>' +
         '<td contenteditable="true">Item</td>' +
-        '<td contenteditable="true">Code</td>' +
-        '<td contenteditable="true">Description</td>' +
         '<td><input type="number" value="1" min="1" required class="form-control" oninput="updateRow(this)"><span class="print-only"></span></td>' +
         '<td><input type="number" value="0" min="0" required class="form-control" oninput="updateRow(this)"><span class="print-only"></span></td>' +
         '<td class="office-only"><input type="number" value="0" min="0" required class="form-control" oninput="updateRow(this)"><span class="print-only"></span></td>' +
@@ -171,17 +167,17 @@ function updateTotals() {
     var grandCost = 0;
 
     for (var i = 0; i < rows.length; i++) {
-        var qty = parseFloat(rows[i].querySelector('td:nth-child(5) input').value) || 0;
-        var sell = parseFloat(rows[i].querySelector('td:nth-child(6) input').value) || 0;
+        var qty = parseFloat(rows[i].querySelector('td:nth-child(3) input').value) || 0;
+        var sell = parseFloat(rows[i].querySelector('td:nth-child(4) input').value) || 0;
         var cost = 0;
-        if (rows[i].querySelector('td:nth-child(7) input')) {
-            cost = parseFloat(rows[i].querySelector('td:nth-child(7) input').value) || 0;
+        if (rows[i].querySelector('td:nth-child(5) input')) {
+            cost = parseFloat(rows[i].querySelector('td:nth-child(5) input').value) || 0;
         }
 
-        rows[i].querySelector('td:nth-child(5) span').innerHTML = qty;
-        rows[i].querySelector('td:nth-child(6) span').innerHTML = sell.toFixed(2);
-        if (rows[i].querySelector('td:nth-child(7) span')) {
-            rows[i].querySelector('td:nth-child(7) span').innerHTML = cost.toFixed(2);
+        rows[i].querySelector('td:nth-child(3) span').innerHTML = qty;
+        rows[i].querySelector('td:nth-child(4) span').innerHTML = sell.toFixed(2);
+        if (rows[i].querySelector('td:nth-child(5) span')) {
+            rows[i].querySelector('td:nth-child(5) span').innerHTML = cost.toFixed(2);
         }
 
         var subtotalSell = qty * sell;
@@ -270,11 +266,9 @@ function exportJSON() {
     rows.forEach(row => {
         data.items.push({
             product: row.cells[1].innerText,
-            code: row.cells[2].innerText,
-            description: row.cells[3].innerText,
-            qty: row.querySelector('td:nth-child(5) input').value,
-            sell: row.querySelector('td:nth-child(6) input').value,
-            cost: row.querySelector('td:nth-child(7) input') ? row.querySelector('td:nth-child(7) input').value : 0
+            qty: row.querySelector('td:nth-child(3) input').value,
+            sell: row.querySelector('td:nth-child(4) input').value,
+            cost: row.querySelector('td:nth-child(5) input') ? row.querySelector('td:nth-child(5) input').value : 0
         });
     });
 
@@ -289,7 +283,6 @@ function exportJSON() {
     var contact = document.getElementById("customerContact").value || "no_contact";
     var agent = document.getElementById("agentName").value || "no_agent";
 
-    // Tambah timestamp hhmmss
     var now = new Date();
     var hh = String(now.getHours()).padStart(2, "0");
     var mm = String(now.getMinutes()).padStart(2, "0");
@@ -327,12 +320,10 @@ function importJSON(event) {
                 addItem();
                 var row = tbody.lastChild;
                 row.cells[1].innerText = item.product || "";
-                row.cells[2].innerText = item.code || "";
-                row.cells[3].innerText = item.description || "";
-                row.querySelector('td:nth-child(5) input').value = item.qty || 0;
-                row.querySelector('td:nth-child(6) input').value = item.sell || 0;
-                if (row.querySelector('td:nth-child(7) input')) {
-                    row.querySelector('td:nth-child(7) input').value = item.cost || 0;
+                row.querySelector('td:nth-child(3) input').value = item.qty || 0;
+                row.querySelector('td:nth-child(4) input').value = item.sell || 0;
+                if (row.querySelector('td:nth-child(5) input')) {
+                    row.querySelector('td:nth-child(5) input').value = item.cost || 0;
                 }
                 updateTotals();
             });
