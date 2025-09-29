@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>TIEN TIEN Quick Quotation Generator | Beta 3.5</title>
+<title>TIEN TIEN Quick Quotation Generator | Beta 3.6</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
 <style>
@@ -284,16 +284,14 @@ function printCustomer() {
     toggleOfficeCols(false);
     updateColspans(true);
     document.body.classList.add("customer-copy-print");
-    document.body.setAttribute("data-watermark", "TIEN TIEN QUICK QUOTATION <br />CUSTOMER COPY");
-    document.getElementById("grandTotalSell").classList.add("customer-copy");
+    document.body.setAttribute("data-watermark", "CUSTOMER COPY"); // <<< ADD
 
     setTimeout(function() {
         window.print();
         toggleOfficeCols(true);
         updateColspans(false);
         document.body.classList.remove("customer-copy-print");
-        document.body.removeAttribute("data-watermark");
-        document.getElementById("grandTotalSell").classList.remove("customer-copy");
+        document.body.removeAttribute("data-watermark"); // <<< REMOVE
     }, 60);
 }
 
@@ -303,14 +301,17 @@ function printOffice() {
     toggleOfficeCols(true);
     updateColspans(false);
     document.body.classList.add("office-copy-print");
-    document.body.setAttribute("data-watermark", "TIEN TIEN QUICK QUOTATION <br />OFFICE COPY");
-    document.getElementById("grandTotalSell").classList.remove("customer-copy");
+    document.body.setAttribute("data-watermark", "OFFICE COPY"); // <<< ADD
+
     setTimeout(function() {
         window.print();
+        toggleOfficeCols(true);
+        updateColspans(false);
         document.body.classList.remove("office-copy-print");
-        document.body.removeAttribute("data-watermark");
+        document.body.removeAttribute("data-watermark"); // <<< REMOVE
     }, 60);
 }
+
 
 /* --------- export/import JSON --------- */
 function exportJSON() {
