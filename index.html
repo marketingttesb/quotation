@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>TIEN TIEN Quick Quotation Generator | Beta 1.1</title>
+<title>TIEN TIEN Quick Quotation Generator | Beta 1.2</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
 <style>
@@ -74,10 +74,10 @@
                 <th>#</th>
                 <th>Products</th>
                 <th>Quantity</th>
-                <th>Price(RM)</th>
-                <th class="office-only">Less Price(RM)</th>
-                <th>Total(RM)</th>
-                <th class="office-only">Less Total(RM)</th>
+                <th>Normal Price(RM)</th>
+                <th class="office-only">Selling Price(RM)</th>
+                <th>Total Normal Price(RM)</th>
+                <th class="office-only">Total Selling Price(RM)</th>
                 <th class="no-print">&nbsp;</th>
             </tr>
         </thead>
@@ -93,7 +93,7 @@
             <!-- Fixed row for customer copy -->
             <tr id="customerGrandCostRow" class="print-only">
                 <!-- colspan set dynamically -->
-                <td id="customerGrandTitle" class="text-right totals">After Less: RM</td>
+                <td id="customerGrandTitle" class="text-right totals">Discounted Price: RM</td>
                 <td id="grandTotalCostCustomer">0.00</td>
             </tr>
         </tfoot>
