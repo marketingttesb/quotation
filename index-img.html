@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>TIEN TIEN Quick Quotation Generator | Beta 3.4</title>
+<title>TIEN TIEN Quick Quotation Generator | Beta 3.5</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
 <style>
@@ -121,8 +121,9 @@
 	        <button class="btn btn-success bi-plus-circle mr-2" onclick="addItem()"> Add Item</button>
 	        <button class="btn btn-primary bi-printer mr-2" onclick="printCustomer()"> Print Customer Copy</button>
 	        <button class="btn btn-warning bi-printer mr-2" onclick="printOffice()"> Print Office Copy</button>
-	        <button class="btn btn-secondary bi-box-arrow-up-right mr-2" onclick="openCustomerCopy()"> Open Customer Copy</button>
-<button class="btn btn-info bi-box-arrow-up-right mr-2" onclick="openOfficeCopy()"> Open Office Copy</button>
+	        <button class="btn btn-secondary bi-box-arrow-up-right mr-2" onclick="openCustomerCopy()"> Export Customer Copy (Image)</button>
+<button class="btn btn-info bi-box-arrow-up-right mr-2" onclick="openOfficeCopy()"> Export Office Copy (Image)</button>
+
 
 	    </div>
     </div>
@@ -377,8 +378,7 @@ document.addEventListener('DOMContentLoaded', function() {
         .catch(err => console.error("Error loading agent.json", err));
 });
 
-/* --------- open in new tab --------- */
-/* --------- open clean customer copy --------- */
+/* --------- open new page and auto-export --------- */
 function openCustomerCopy() {
     if (!validateForm()) return;
     syncPrintFields();
@@ -387,7 +387,6 @@ function openCustomerCopy() {
     document.body.classList.add("customer-copy-print");
     document.getElementById("grandTotalSell").classList.add("customer-copy");
 
-    // extract the final HTML after print adjustments
     let content = document.getElementById("quotation-container").outerHTML;
     let links = Array.from(document.querySelectorAll("link, style")).map(el => el.outerHTML).join("\n");
 
@@ -398,25 +397,33 @@ function openCustomerCopy() {
             <title>Customer Copy</title>
             <meta charset="UTF-8">
             ${links}
-            <style>
-                body { margin:20px; }
-            </style>
+            <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"><\/script>
         </head>
         <body class="customer-copy-print">
             ${content}
+            <script>
+                window.onload = function() {
+                    let container = document.getElementById("quotation-container");
+                    html2canvas(container, {scale:2}).then(canvas => {
+                        let link = document.createElement("a");
+                        link.download = "customer_copy.png";
+                        link.href = canvas.toDataURL("image/png");
+                        link.click();
+                    });
+                }
+            <\/script>
         </body>
         </html>
     `);
     newWin.document.close();
 
-    // restore back original page state
+    // restore main page
     toggleOfficeCols(true);
     updateColspans(false);
     document.body.classList.remove("customer-copy-print");
     document.getElementById("grandTotalSell").classList.remove("customer-copy");
 }
 
-/* --------- open clean office copy --------- */
 function openOfficeCopy() {
     if (!validateForm()) return;
     syncPrintFields();
@@ -425,7 +432,6 @@ function openOfficeCopy() {
     document.body.classList.remove("customer-copy-print");
     document.getElementById("grandTotalSell").classList.remove("customer-copy");
 
-    // extract the final HTML after print adjustments
     let content = document.getElementById("quotation-container").outerHTML;
     let links = Array.from(document.querySelectorAll("link, style")).map(el => el.outerHTML).join("\n");
 
@@ -436,17 +442,27 @@ function openOfficeCopy() {
             <title>Office Copy</title>
             <meta charset="UTF-8">
             ${links}
-            <style>
-                body { margin:20px; }
-            </style>
+            <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"><\/script>
         </head>
         <body>
             ${content}
+            <script>
+                window.onload = function() {
+                    let container = document.getElementById("quotation-container");
+                    html2canvas(container, {scale:2}).then(canvas => {
+                        let link = document.createElement("a");
+                        link.download = "office_copy.png";
+                        link.href = canvas.toDataURL("image/png");
+                        link.click();
+                    });
+                }
+            <\/script>
         </body>
         </html>
     `);
     newWin.document.close();
 }
+
 
 </script>
 
