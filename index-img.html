@@ -118,13 +118,9 @@
             </select>
         </div>
         <div class="align-items-right">
-            <button class="btn btn-success bi-plus-circle mr-2" onclick="addItem()"> Add Item</button>
-            <button class="btn btn-primary bi-printer mr-2" onclick="printCustomer()"> Print Customer Copy</button>
-            <button class="btn btn-warning bi-printer mr-2" onclick="printOffice()"> Print Office Copy</button> | 
-			<!-- Tambah butang export -->
-<button class="btn btn-info mr-2" onclick="exportImage('customer')">Export Customer Image</button>
-<button class="btn btn-dark mr-2" onclick="exportImage('office')">Export Office Image</button>
-
+            <button class="btn btn-success bi-plus-circle mr-2" onclick="addItem()"> Add Item</button> | 
+            For Customer <button class="btn btn-primary bi-printer mr-2" onclick="printCustomer()"></button> <button class="btn btn-info bi bi-image mr-2" onclick="exportImage('customer')"></button> | 
+            For Office <button class="btn btn-warning bi-printer mr-2" onclick="printOffice()"></button> <button class="btn btn-dark bi bi-image mr-2" onclick="exportImage('office')"></button>
         </div>
     </div>
 </div>
