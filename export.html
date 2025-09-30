@@ -43,7 +43,7 @@ window.addEventListener("message", function(event) {
     // validity
     if (data.quotationDate) {
         let d = new Date(data.quotationDate);
-        d.setDate(d.getDate() + 14);
+        d.setDate(d.getDate() + 30);
         document.getElementById("quotationValidity").innerText = "*This quotation valid until " + d.toDateString();
     }
 
