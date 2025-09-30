@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>TIEN TIEN Quick Quotation Generator | Beta 3.3</title>
+<title>TIEN TIEN Quick Quotation Generator | Beta 3.4</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
 <!-- html2canvas for image export -->
@@ -123,13 +123,10 @@
             </select>
         </div>
         <div class="align-items-right">
-            <button class="btn btn-success bi-plus-circle mr-2" onclick="addItem()"> Add Item</button>
-            <button class="btn btn-primary bi-printer mr-2" onclick="printCustomer()"> Print Customer Copy</button>
-            <button class="btn btn-warning bi-printer mr-2" onclick="printOffice()"> Print Office Copy</button>
+            <button class="btn btn-success bi-plus-circle mr-2" onclick="addItem()"> Add Item</button> | 
+			Customer Copy <button class="btn btn-primary bi-printer mr-2" onclick="printCustomer()"></button> <button class="btn btn-info bi-image mr-2" onclick="exportAsImage('customer')"></button> | 
+            Office Copy <button class="btn btn-warning bi-printer mr-2" onclick="printOffice()"></button> <button class="btn btn-secondary bi-image mr-2" onclick="exportAsImage('office')"></button>
 
-            <!-- NEW: export print-layout to image (customer / office) -->
-            <button class="btn btn-info bi-image mr-2" onclick="exportCustomerImage()"> Export Customer Image</button>
-            <button class="btn btn-secondary bi-image mr-2" onclick="exportOfficeImage()"> Export Office Image</button>
         </div>
     </div>
 </div>
@@ -497,6 +494,43 @@ function capturePrintAsImage(mode) {
             if (wrapper.parentNode) wrapper.parentNode.removeChild(wrapper);
         });
     }, 150);
+}
+function exportAsImage(copyType) {
+    if (!validateForm()) return;
+    syncPrintFields();
+
+    if (copyType === 'customer') {
+        toggleOfficeCols(false);
+        updateColspans(true);
+        document.body.classList.add("customer-copy-print");
+        document.getElementById("grandTotalSell").classList.add("customer-copy");
+    } else {
+        toggleOfficeCols(true);
+        updateColspans(false);
+        document.body.classList.remove("customer-copy-print");
+        document.getElementById("grandTotalSell").classList.remove("customer-copy");
+    }
+
+    const container = document.getElementById("quotation-container");
+
+    html2canvas(container, {
+        scale: 2, // higher resolution
+        useCORS: true,
+        scrollX: 0,
+        scrollY: -window.scrollY,
+        windowWidth: document.documentElement.scrollWidth,
+        windowHeight: document.documentElement.scrollHeight
+    }).then(canvas => {
+        const link = document.createElement("a");
+        link.download = `${copyType}_quotation.png`;
+        link.href = canvas.toDataURL("image/png");
+        link.click();
+    }).finally(() => {
+        toggleOfficeCols(true);
+        updateColspans(false);
+        document.body.classList.remove("customer-copy-print");
+        document.getElementById("grandTotalSell").classList.remove("customer-copy");
+    });
 }
 
 /* --------- initial setup --------- */
