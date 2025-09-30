@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>TIEN TIEN Quick Quotation Generator | Beta 3.5</title>
+<title>TIEN TIEN Quick Quotation Generator | Beta 3.6</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
 <!-- html2canvas for image export -->
@@ -362,12 +362,24 @@ function importJSON(event) {
     reader.readAsText(file);
 }
 
-/* --------- export print-layout to image: helper (updated to clone + copy live values) --------- */
+/* ---------- light validation for export (don't block on agent etc) ---------- */
+function validateFormForExport() {
+    const name = document.getElementById("customerName").value.trim();
+    const date = document.getElementById("quotationDate").value;
+    if (!name || !date) {
+        alert("Please fill Customer Name and Date before exporting.");
+        return false;
+    }
+    return true;
+}
+
+/* ---------- clone + prepare + export (robust) ---------- */
 function capturePrintAsImage(mode) {
-    if (!validateForm()) return;
+    // minimal validation so export isn't blocked by other required fields
+    if (!validateFormForExport()) return;
     syncPrintFields();
 
-    // Prepare original in print-like state so computed colspans & styles are applied, then clone
+    // Put original into a print-like state briefly so computed styles/colspans are correct
     if (mode === 'customer') {
         toggleOfficeCols(false);
         updateColspans(true);
@@ -380,18 +392,17 @@ function capturePrintAsImage(mode) {
         document.getElementById("grandTotalSell").classList.remove("customer-copy");
     }
 
-    const container = document.getElementById("quotation-container");
-    const clone = container.cloneNode(true);
+    const original = document.getElementById("quotation-container");
+    const clone = original.cloneNode(true);
 
-    // Copy live control values from the original into the clone (so user-edited fields are preserved)
-    const origControls = container.querySelectorAll('input, select, textarea');
+    // Copy values from live controls into the clone so the clone reflects current state
+    const origControls = original.querySelectorAll('input, select, textarea');
     const cloneControls = clone.querySelectorAll('input, select, textarea');
     for (let i = 0; i < cloneControls.length; i++) {
         const c = cloneControls[i];
         const o = origControls[i];
         if (!o) continue;
-        const tag = c.tagName.toLowerCase();
-        if (tag === 'select') {
+        if (c.tagName.toLowerCase() === 'select') {
             c.selectedIndex = o.selectedIndex;
         } else if (c.type === 'checkbox' || c.type === 'radio') {
             c.checked = o.checked;
@@ -401,14 +412,14 @@ function capturePrintAsImage(mode) {
         }
     }
 
-    // Copy contenteditable text (product names) as well
-    const origEditables = container.querySelectorAll('[contenteditable]');
+    // Copy contenteditable fields (product names)
+    const origEditables = original.querySelectorAll('[contenteditable]');
     const cloneEditables = clone.querySelectorAll('[contenteditable]');
     for (let i = 0; i < cloneEditables.length; i++) {
         if (origEditables[i]) cloneEditables[i].innerHTML = origEditables[i].innerHTML;
     }
 
-    // Revert original immediately so the UI doesn't stay in print-mode
+    // Revert original immediately (so UI doesn't stay in print-mode)
     if (mode === 'customer') {
         toggleOfficeCols(true);
         updateColspans(false);
@@ -416,69 +427,76 @@ function capturePrintAsImage(mode) {
         document.getElementById("grandTotalSell").classList.remove("customer-copy");
     }
 
-    // Prepare clone to look like the printed page:
+    // Prepare clone for print capture
+    //  - remove interactive controls (.no-print),
+    //  - replace inputs/selects with plain spans,
+    //  - replace images with placeholders (avoid CORS/taint),
+    //  - show/hide office-only / print-onlys according to mode
     function prepareCloneForPrint(root) {
-        // remove interactive elements (.no-print)
-        const noPrints = root.querySelectorAll('.no-print');
-        noPrints.forEach(el => el.remove());
+        // Remove no-print parts
+        root.querySelectorAll('.no-print').forEach(el => el.remove());
 
-        // Replace inputs/selects/textareas with simple spans showing value
-        const controls = root.querySelectorAll('input, select, textarea');
-        controls.forEach(ctrl => {
+        // Replace images with placeholders to avoid CORS problems.
+        // If you want the real logo in the image, embed it as a base64 data URL or serve it with CORS headers.
+        root.querySelectorAll('img').forEach(img => {
+            const placeholder = document.createElement('div');
+            placeholder.textContent = img.alt || 'Logo';
+            placeholder.style.display = 'inline-block';
+            placeholder.style.fontWeight = '700';
+            placeholder.style.fontSize = '14px';
+            // preserve basic size so layout doesn't collapse
+            placeholder.style.width = (img.width || 140) + 'px';
+            placeholder.style.height = (img.height || 28) + 'px';
+            img.parentNode.replaceChild(placeholder, img);
+        });
+
+        // Replace controls with spans
+        root.querySelectorAll('input, select, textarea').forEach(ctrl => {
             const span = document.createElement('span');
             if (ctrl.tagName.toLowerCase() === 'select') {
                 span.textContent = (ctrl.options[ctrl.selectedIndex] ? ctrl.options[ctrl.selectedIndex].text : ctrl.value) || '';
+            } else if (ctrl.type === 'checkbox' || ctrl.type === 'radio') {
+                span.textContent = ctrl.checked ? 'Yes' : '';
             } else {
-                if (ctrl.type === 'checkbox' || ctrl.type === 'radio') {
-                    span.textContent = ctrl.checked ? 'Yes' : 'No';
-                } else {
-                    span.textContent = ctrl.value || '';
-                }
+                span.textContent = ctrl.value || '';
             }
             span.className = 'printed-value';
-            // Replace the control
             if (ctrl.parentNode) ctrl.parentNode.replaceChild(span, ctrl);
         });
 
-        // Remove any contenteditable attribute (we want plain text)
-        const editables = root.querySelectorAll('[contenteditable]');
-        editables.forEach(el => el.removeAttribute('contenteditable'));
+        // Remove contenteditable so it becomes plain text
+        root.querySelectorAll('[contenteditable]').forEach(el => el.removeAttribute('contenteditable'));
 
-        // Show print-only elements
-        const printOnlyEls = root.querySelectorAll('.print-only');
-        printOnlyEls.forEach(el => {
+        // show print-only header
+        root.querySelectorAll('.print-only').forEach(el => {
             if (el.tagName.toLowerCase() === 'div') el.style.display = 'flex';
             else el.style.display = '';
         });
 
-        // Handle the special discounted row (print-onlys)
-        const printOnlysRows = root.querySelectorAll('.print-onlys');
-        printOnlysRows.forEach(el => {
+        // show discounted row only for customer copy
+        root.querySelectorAll('.print-onlys').forEach(el => {
             el.style.display = (mode === 'customer') ? 'table-row' : 'none';
         });
 
-        // Office-only columns: show only on office mode
-        const officeCols = root.querySelectorAll('.office-only');
-        officeCols.forEach(el => {
+        // Office columns shown only for office
+        root.querySelectorAll('.office-only').forEach(el => {
             el.style.display = (mode === 'office') ? '' : 'none';
         });
 
-        // For customer mode, add strike-through class to grand total in the clone
-        if (mode === 'customer') {
-            const g = root.querySelector('#grandTotalSell');
-            if (g) g.classList.add('customer-copy');
-        } else {
-            const g = root.querySelector('#grandTotalSell');
-            if (g) g.classList.remove('customer-copy');
+        // apply strike-through for grand total in customer clone
+        const g = root.querySelector('#grandTotalSell');
+        if (g) {
+            if (mode === 'customer') g.classList.add('customer-copy');
+            else g.classList.remove('customer-copy');
         }
     }
 
     prepareCloneForPrint(clone);
 
-    // Wrap clone in a clean wrapper so html2canvas captures only the print view.
+    // Wrap clone for a clean capture area
     const wrapper = document.createElement('div');
     wrapper.id = 'print-capture-wrapper';
-    wrapper.style.width = '794px'; // ~210mm at 96dpi
+    wrapper.style.width = '794px'; // ~A4 at 96dpi
     wrapper.style.backgroundColor = '#ffffff';
     wrapper.style.padding = '16px';
     wrapper.style.position = 'fixed';
@@ -486,39 +504,39 @@ function capturePrintAsImage(mode) {
     wrapper.style.top = '50%';
     wrapper.style.transform = 'translate(-50%,-50%)';
     wrapper.style.zIndex = '999999';
-    wrapper.style.boxShadow = '0 0 0 rgba(0,0,0,0)';
     wrapper.appendChild(clone);
-
     document.body.appendChild(wrapper);
 
-    // small delay so fonts/images/layout settle
+    // Give the browser a moment to render the clone, then capture
     setTimeout(() => {
         html2canvas(wrapper, {
             scale: 2,
             useCORS: true,
             backgroundColor: '#ffffff',
-            scrollY: -window.scrollY // ensure stable capture
+            scrollY: -window.scrollY,
+            windowWidth: document.documentElement.scrollWidth,
+            windowHeight: document.documentElement.scrollHeight
         }).then(canvas => {
             const link = document.createElement('a');
-            link.href = canvas.toDataURL('image/png');
             const now = new Date();
             const timestamp = `${String(now.getFullYear())}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}_${String(now.getHours()).padStart(2,'0')}${String(now.getMinutes()).padStart(2,'0')}`;
             link.download = `quotation-${mode}-${timestamp}.png`;
+            link.href = canvas.toDataURL('image/png');
             link.click();
         }).catch(err => {
             console.error('html2canvas error', err);
-            alert('Failed to export image — check console for details.');
+            alert('Export failed — check console for details (possible CORS/tainted canvas issue).');
         }).finally(() => {
-            // clean up
             if (wrapper.parentNode) wrapper.parentNode.removeChild(wrapper);
         });
-    }, 150);
+    }, 180);
 }
 
-// simplified export entry that uses the clone-based capture above
+// simple wrapper used by your buttons
 function exportAsImage(copyType) {
     capturePrintAsImage(copyType);
 }
+
 
 /* --------- initial setup --------- */
 document.addEventListener('DOMContentLoaded', function() {
