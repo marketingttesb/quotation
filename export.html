@@ -3,25 +3,38 @@
 <head>
 <meta charset="UTF-8">
 <title>Export Quotation</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 <style>
-body { font-family: Arial, sans-serif; padding:20px; }
-table { border-collapse: collapse; width: 100%; margin-top:10px; }
-table, th, td { border:1px solid #000; padding:5px; }
-#exportArea { background:#fff; padding:20px; }
+body { font-family: Arial, sans-serif; padding:20px; background:#f9f9f9; }
+#exportArea { background:#fff; padding:20px; border-radius:10px; box-shadow:0 0 8px rgba(0,0,0,0.1); }
+table { width: 100%; border-collapse: collapse; margin-top:15px; }
+table th, table td { border:1px solid #000; padding:6px; }
+h2 { margin:0; }
 </style>
 </head>
 <body>
 <div id="exportArea">
-    <h2 id="copyTitle"></h2>
+    <!-- Header with Logo & Title -->
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <img src="transparent_black.png" alt="Logo" style="height:80px;">
+        <h2 id="copyTitle"></h2>
+    </div>
+
+    <!-- Customer Info -->
     <p><strong>Customer Name:</strong> <span id="printCustomerName"></span></p>
     <p><strong>Date:</strong> <span id="printQuotationDate"></span></p>
+
+    <!-- Items Table -->
     <table id="itemsTable">
-        <thead id="tableHead"></thead>
+        <thead id="tableHead" class="thead-light"></thead>
         <tbody></tbody>
         <tfoot id="tableFoot"></tfoot>
     </table>
-    <p id="quotationValidity"></p>
+
+    <!-- Footer -->
+    <p id="quotationValidity" class="mt-2"></p>
     <p id="preparedBy"></p>
 </div>
 
@@ -57,7 +70,7 @@ window.addEventListener("message", function(event) {
     let grandSell = 0, grandCost = 0;
 
     if (type === "customer") {
-        // table head
+        // customer table
         thead.innerHTML = `<tr>
             <th>#</th><th>Product</th><th>Qty</th><th>Price(RM)</th><th>Total(RM)</th>
         </tr>`;
@@ -75,7 +88,7 @@ window.addEventListener("message", function(event) {
             <tr><td colspan="4" align="right"><b>Grand Total: RM</b></td><td>${grandSell.toFixed(2)}</td></tr>
             <tr><td colspan="4" align="right"><b>Discounted Price: RM</b></td><td>${grandCost.toFixed(2)}</td></tr>`;
     } else {
-        // office
+        // office table
         thead.innerHTML = `<tr>
             <th>#</th><th>Product</th><th>Qty</th><th>Selling Price(RM)</th><th>Total(RM)</th>
             <th>PM Price(RM)</th><th>Total PM(RM)</th>
