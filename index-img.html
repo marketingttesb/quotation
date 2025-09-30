@@ -120,9 +120,10 @@
         <div class="align-items-right">
 	        <button class="btn btn-success bi-plus-circle mr-2" onclick="addItem()"> Add Item</button>
 	        <button class="btn btn-primary bi-printer mr-2" onclick="printCustomer()"> Print Customer Copy</button>
-	        <button class="btn btn-secondary bi-box-arrow-up-right mr-2" onclick="openCustomerCopy()"> Open Customer Copy</button>
 	        <button class="btn btn-warning bi-printer mr-2" onclick="printOffice()"> Print Office Copy</button>
-	        <button class="btn btn-info bi-box-arrow-up-right mr-2" onclick="openOfficeCopy()"> Open Office Copy</button>
+	        <button class="btn btn-secondary bi-box-arrow-up-right mr-2" onclick="openCustomerCopy()"> Open Customer Copy</button>
+<button class="btn btn-info bi-box-arrow-up-right mr-2" onclick="openOfficeCopy()"> Open Office Copy</button>
+
 	    </div>
     </div>
 </div>
@@ -377,6 +378,7 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 /* --------- open in new tab --------- */
+/* --------- open clean customer copy --------- */
 function openCustomerCopy() {
     if (!validateForm()) return;
     syncPrintFields();
@@ -385,30 +387,36 @@ function openCustomerCopy() {
     document.body.classList.add("customer-copy-print");
     document.getElementById("grandTotalSell").classList.add("customer-copy");
 
+    // extract the final HTML after print adjustments
     let content = document.getElementById("quotation-container").outerHTML;
-    let style = document.querySelector("style").outerHTML;
     let links = Array.from(document.querySelectorAll("link, style")).map(el => el.outerHTML).join("\n");
-    let win = window.open("", "_blank");
-    win.document.write(`
+
+    let newWin = window.open("", "_blank");
+    newWin.document.write(`
         <html>
         <head>
             <title>Customer Copy</title>
+            <meta charset="UTF-8">
             ${links}
+            <style>
+                body { margin:20px; }
+            </style>
         </head>
         <body class="customer-copy-print">
             ${content}
         </body>
         </html>
     `);
-    win.document.close();
+    newWin.document.close();
 
-    // restore page
+    // restore back original page state
     toggleOfficeCols(true);
     updateColspans(false);
     document.body.classList.remove("customer-copy-print");
     document.getElementById("grandTotalSell").classList.remove("customer-copy");
 }
 
+/* --------- open clean office copy --------- */
 function openOfficeCopy() {
     if (!validateForm()) return;
     syncPrintFields();
@@ -417,21 +425,27 @@ function openOfficeCopy() {
     document.body.classList.remove("customer-copy-print");
     document.getElementById("grandTotalSell").classList.remove("customer-copy");
 
+    // extract the final HTML after print adjustments
     let content = document.getElementById("quotation-container").outerHTML;
     let links = Array.from(document.querySelectorAll("link, style")).map(el => el.outerHTML).join("\n");
-    let win = window.open("", "_blank");
-    win.document.write(`
+
+    let newWin = window.open("", "_blank");
+    newWin.document.write(`
         <html>
         <head>
             <title>Office Copy</title>
+            <meta charset="UTF-8">
             ${links}
+            <style>
+                body { margin:20px; }
+            </style>
         </head>
         <body>
             ${content}
         </body>
         </html>
     `);
-    win.document.close();
+    newWin.document.close();
 }
 
 </script>
