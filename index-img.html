@@ -141,7 +141,7 @@ function syncPrintFields() {
     let dateVal = document.getElementById("quotationDate").value;
     if (dateVal) {
         let d = new Date(dateVal);
-        d.setDate(d.getDate() + 14);
+        d.setDate(d.getDate() + 30);
         let options = { year: 'numeric', month: 'long', day: '2-digit' };
         document.getElementById("quotationValidity").innerHTML = "*This quotation valid until " + d.toLocaleDateString('en-GB', options);
     }
