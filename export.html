@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Export Quotation</title>
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+<style>
+body { font-family: Arial, sans-serif; padding:20px; }
+table { border-collapse: collapse; width: 100%; margin-top:10px; }
+table, th, td { border:1px solid #000; padding:5px; }
+#exportArea { background:#fff; padding:20px; }
+</style>
+</head>
+<body>
+<div id="exportArea">
+    <h2 id="copyTitle"></h2>
+    <p><strong>Customer Name:</strong> <span id="printCustomerName"></span></p>
+    <p><strong>Date:</strong> <span id="printQuotationDate"></span></p>
+    <table id="itemsTable">
+        <thead id="tableHead"></thead>
+        <tbody></tbody>
+        <tfoot id="tableFoot"></tfoot>
+    </table>
+    <p id="quotationValidity"></p>
+    <p id="preparedBy"></p>
+</div>
+
+<script>
+function getParam(name) {
+    return new URLSearchParams(window.location.search).get(name);
+}
+
+window.addEventListener("message", function(event) {
+    let type = getParam("type"); // customer / office
+    let data = event.data;
+
+    document.getElementById("copyTitle").innerText = 
+        "Quick Quotation - " + (type === "customer" ? "Customer Copy" : "Office Copy");
+    document.getElementById("printCustomerName").innerText = data.customerName;
+    document.getElementById("printQuotationDate").innerText = data.quotationDate;
+    document.getElementById("preparedBy").innerText = "Prepared By: " + data.agentName;
+
+    // validity
+    if (data.quotationDate) {
+        let d = new Date(data.quotationDate);
+        d.setDate(d.getDate() + 14);
+        document.getElementById("quotationValidity").innerText = "*This quotation valid until " + d.toDateString();
+    }
+
+    let tbody = document.querySelector("#itemsTable tbody");
+    let thead = document.getElementById("tableHead");
+    let tfoot = document.getElementById("tableFoot");
+    tbody.innerHTML = "";
+    thead.innerHTML = "";
+    tfoot.innerHTML = "";
+
+    let grandSell = 0, grandCost = 0;
+
+    if (type === "customer") {
+        // table head
+        thead.innerHTML = `<tr>
+            <th>#</th><th>Product</th><th>Qty</th><th>Price(RM)</th><th>Total(RM)</th>
+        </tr>`;
+        data.items.forEach((item,i) => {
+            let subtotalSell = item.qty * item.sell;
+            let subtotalCost = item.qty * item.cost;
+            grandSell += subtotalSell;
+            grandCost += subtotalCost;
+            let tr = document.createElement("tr");
+            tr.innerHTML = `<td>${i+1}</td><td>${item.product}</td><td>${item.qty}</td>
+                            <td>${parseFloat(item.sell).toFixed(2)}</td><td>${subtotalSell.toFixed(2)}</td>`;
+            tbody.appendChild(tr);
+        });
+        tfoot.innerHTML = `
+            <tr><td colspan="4" align="right"><b>Grand Total: RM</b></td><td>${grandSell.toFixed(2)}</td></tr>
+            <tr><td colspan="4" align="right"><b>Discounted Price: RM</b></td><td>${grandCost.toFixed(2)}</td></tr>`;
+    } else {
+        // office
+        thead.innerHTML = `<tr>
+            <th>#</th><th>Product</th><th>Qty</th><th>Selling Price(RM)</th><th>Total(RM)</th>
+            <th>PM Price(RM)</th><th>Total PM(RM)</th>
+        </tr>`;
+        data.items.forEach((item,i) => {
+            let subtotalSell = item.qty * item.sell;
+            let subtotalCost = item.qty * item.cost;
+            grandSell += subtotalSell;
+            grandCost += subtotalCost;
+            let tr = document.createElement("tr");
+            tr.innerHTML = `<td>${i+1}</td><td>${item.product}</td><td>${item.qty}</td>
+                            <td>${parseFloat(item.sell).toFixed(2)}</td><td>${subtotalSell.toFixed(2)}</td>
+                            <td>${parseFloat(item.cost).toFixed(2)}</td><td>${subtotalCost.toFixed(2)}</td>`;
+            tbody.appendChild(tr);
+        });
+        tfoot.innerHTML = `
+            <tr><td colspan="4" align="right"><b>Grand Total: RM</b></td>
+                <td>${grandSell.toFixed(2)}</td><td></td><td>${grandCost.toFixed(2)}</td></tr>`;
+    }
+
+    // auto export image
+    setTimeout(() => {
+        html2canvas(document.getElementById("exportArea"), { scale:2 }).then(canvas => {
+            let link = document.createElement("a");
+            link.download = type + "_copy.png";
+            link.href = canvas.toDataURL("image/png");
+            link.click();
+        });
+    }, 500);
+});
+</script>
+</body>
+</html>
