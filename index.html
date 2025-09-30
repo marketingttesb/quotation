@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>TIEN TIEN Quick Quotation Generator | Beta 3.2</title>
+<title>TIEN TIEN Quick Quotation Generator | Beta 3.3</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
 <style>
@@ -137,7 +137,7 @@ function syncPrintFields() {
     let dateVal = document.getElementById("quotationDate").value;
     if (dateVal) {
         let d = new Date(dateVal);
-        d.setDate(d.getDate() + 14);
+        d.setDate(d.getDate() + 30);
         let options = { year: 'numeric', month: 'long', day: '2-digit' };
         document.getElementById("quotationValidity").innerHTML = "*This quotation valid until " + d.toLocaleDateString('en-GB', options);
     }
@@ -377,4 +377,5 @@ document.addEventListener('DOMContentLoaded', function() {
 
 </body>
 </html>
+
 
