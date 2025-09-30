@@ -222,7 +222,6 @@ function updateTotals() {
     updateColspans(false);
 }
 
-<script>
 function validateForm() {
     return document.getElementById("customerName").value.trim() !== "";
 }
@@ -252,7 +251,6 @@ function exportImage(type) {
     let data = collectData();
     win.onload = () => win.postMessage(data, "*");
 }
-</script>
 
 
 /* --------- dynamic colspan management --------- */
