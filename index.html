@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>TIEN TIEN Quick Quotation Generator | Beta 3.4</title>
+<title>TIEN TIEN Quick Quotation Generator | Beta 3.5</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
 
@@ -39,7 +39,9 @@
         body.customer-copy-print .print-onlys { display: table-row !important; }
     }
 </style>
+	
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+
 </head>
 <body class="p-4">
 
@@ -123,8 +125,9 @@
             <button class="btn btn-success bi-plus-circle mr-2" onclick="addItem()"> Add Item</button>
             <button class="btn btn-primary bi-printer mr-2" onclick="printCustomer()"> Print Customer Copy</button>
             <button class="btn btn-warning bi-printer mr-2" onclick="printOffice()"> Print Office Copy</button> | 
-			<button class="btn btn-info bi-image mr-2" onclick="exportCustomerImage()"> Export Customer Image</button>
-			<button class="btn btn-secondary bi-image mr-2" onclick="exportOfficeImage()"> Export Office Image</button>
+			<button class="btn btn-info bi-image mr-2" onclick="exportCustomerImage()"> Export For Customer</button>
+			<button class="btn btn-secondary bi-image mr-2" onclick="exportOfficeImage()"> Export For Office</button>
+
 
         </div>
     </div>
@@ -297,7 +300,7 @@ function printOffice() {
     }, 60);
 }
 
-/* --------- export to image --------- */
+/* --------- export print page to image --------- */
 function exportCustomerImage() {
     if (!validateForm()) return;
     syncPrintFields();
@@ -307,18 +310,23 @@ function exportCustomerImage() {
     document.getElementById("grandTotalSell").classList.add("customer-copy");
 
     setTimeout(() => {
-        html2canvas(document.getElementById("quotation-container"), {scale:2}).then(canvas => {
+        html2canvas(document.getElementById("quotation-container"), {
+            scale: 2,
+            useCORS: true,
+            backgroundColor: "#ffffff"
+        }).then(canvas => {
             let link = document.createElement("a");
             link.href = canvas.toDataURL("image/png");
             link.download = "quotation-customer.png";
             link.click();
         }).finally(() => {
+            // reset back to normal mode
             toggleOfficeCols(true);
             updateColspans(false);
             document.body.classList.remove("customer-copy-print");
             document.getElementById("grandTotalSell").classList.remove("customer-copy");
         });
-    }, 100);
+    }, 200);
 }
 
 function exportOfficeImage() {
@@ -330,14 +338,19 @@ function exportOfficeImage() {
     document.getElementById("grandTotalSell").classList.remove("customer-copy");
 
     setTimeout(() => {
-        html2canvas(document.getElementById("quotation-container"), {scale:2}).then(canvas => {
+        html2canvas(document.getElementById("quotation-container"), {
+            scale: 2,
+            useCORS: true,
+            backgroundColor: "#ffffff"
+        }).then(canvas => {
             let link = document.createElement("a");
             link.href = canvas.toDataURL("image/png");
             link.download = "quotation-office.png";
             link.click();
         });
-    }, 100);
+    }, 200);
 }
+
 
 
 /* --------- export/import JSON --------- */
@@ -426,6 +439,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 </body>
 </html>
+
 
 
 
