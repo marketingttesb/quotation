@@ -106,7 +106,7 @@ window.addEventListener("message", function(event) {
         });
         tfoot.innerHTML = `
             <tr><td colspan="4" align="right"><b>Grand Total: RM</b></td>
-                <td><del>${grandSell.toFixed(2)}</del></td><td></td><td>${grandCost.toFixed(2)}</td></tr>`;
+                <td>${grandSell.toFixed(2)}</td><td></td><td>${grandCost.toFixed(2)}</td></tr>`;
     }
 
     // auto export image
