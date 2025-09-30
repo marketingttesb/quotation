@@ -2,11 +2,9 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>TIEN TIEN Quick Quotation Generator | Beta 3.6</title>
+<title>TIEN TIEN Quick Quotation Generator | Beta 3.4</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
-<!-- html2canvas for image export -->
-<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 <style>
     .no-print { margin-top: 15px; }
     .totals { font-weight: bold; }
@@ -39,9 +37,6 @@
         /* show only when printing customer copy */
         body.customer-copy-print .print-onlys { display: table-row !important; }
     }
-
-    /* small helper for replaced input spans in print clone */
-    .printed-value { white-space: nowrap; }
 </style>
 </head>
 <body class="p-4">
@@ -123,11 +118,12 @@
             </select>
         </div>
         <div class="align-items-right">
-            <button class="btn btn-success bi-plus-circle mr-2" onclick="addItem()"> Add Item</button> | 
-			Customer Copy <button class="btn btn-primary bi-printer mr-2" onclick="printCustomer()"></button> <button class="btn btn-info bi-image mr-2" onclick="exportAsImage('customer')"></button> | 
-            Office Copy <button class="btn btn-warning bi-printer mr-2" onclick="printOffice()"></button> <button class="btn btn-secondary bi-image mr-2" onclick="exportAsImage('office')"></button>
-
-        </div>
+	        <button class="btn btn-success bi-plus-circle mr-2" onclick="addItem()"> Add Item</button>
+	        <button class="btn btn-primary bi-printer mr-2" onclick="printCustomer()"> Print Customer Copy</button>
+	        <button class="btn btn-secondary bi-box-arrow-up-right mr-2" onclick="openCustomerCopy()"> Open Customer Copy</button>
+	        <button class="btn btn-warning bi-printer mr-2" onclick="printOffice()"> Print Office Copy</button>
+	        <button class="btn btn-info bi-box-arrow-up-right mr-2" onclick="openOfficeCopy()"> Open Office Copy</button>
+	    </div>
     </div>
 </div>
 
@@ -143,7 +139,7 @@ function syncPrintFields() {
     let dateVal = document.getElementById("quotationDate").value;
     if (dateVal) {
         let d = new Date(dateVal);
-        d.setDate(d.getDate() + 30);
+        d.setDate(d.getDate() + 14);
         let options = { year: 'numeric', month: 'long', day: '2-digit' };
         document.getElementById("quotationValidity").innerHTML = "*This quotation valid until " + d.toLocaleDateString('en-GB', options);
     }
@@ -268,7 +264,7 @@ function toggleOfficeCols(show) {
     updateColspans(false);
 }
 
-/* --------- printing flow (unchanged) --------- */
+/* --------- printing flow --------- */
 function printCustomer() {
     if (!validateForm()) return;
     syncPrintFields();
@@ -298,7 +294,7 @@ function printOffice() {
     }, 60);
 }
 
-/* --------- export/import JSON (unchanged) --------- */
+/* --------- export/import JSON --------- */
 function exportJSON() {
     var data = {
         customerName: document.getElementById("customerName").value,
@@ -362,182 +358,6 @@ function importJSON(event) {
     reader.readAsText(file);
 }
 
-/* ---------- light validation for export (don't block on agent etc) ---------- */
-function validateFormForExport() {
-    const name = document.getElementById("customerName").value.trim();
-    const date = document.getElementById("quotationDate").value;
-    if (!name || !date) {
-        alert("Please fill Customer Name and Date before exporting.");
-        return false;
-    }
-    return true;
-}
-
-/* ---------- clone + prepare + export (robust) ---------- */
-function capturePrintAsImage(mode) {
-    // minimal validation so export isn't blocked by other required fields
-    if (!validateFormForExport()) return;
-    syncPrintFields();
-
-    // Put original into a print-like state briefly so computed styles/colspans are correct
-    if (mode === 'customer') {
-        toggleOfficeCols(false);
-        updateColspans(true);
-        document.body.classList.add("customer-copy-print");
-        document.getElementById("grandTotalSell").classList.add("customer-copy");
-    } else {
-        toggleOfficeCols(true);
-        updateColspans(false);
-        document.body.classList.remove("customer-copy-print");
-        document.getElementById("grandTotalSell").classList.remove("customer-copy");
-    }
-
-    const original = document.getElementById("quotation-container");
-    const clone = original.cloneNode(true);
-
-    // Copy values from live controls into the clone so the clone reflects current state
-    const origControls = original.querySelectorAll('input, select, textarea');
-    const cloneControls = clone.querySelectorAll('input, select, textarea');
-    for (let i = 0; i < cloneControls.length; i++) {
-        const c = cloneControls[i];
-        const o = origControls[i];
-        if (!o) continue;
-        if (c.tagName.toLowerCase() === 'select') {
-            c.selectedIndex = o.selectedIndex;
-        } else if (c.type === 'checkbox' || c.type === 'radio') {
-            c.checked = o.checked;
-        } else {
-            c.value = o.value;
-            c.setAttribute('value', o.value);
-        }
-    }
-
-    // Copy contenteditable fields (product names)
-    const origEditables = original.querySelectorAll('[contenteditable]');
-    const cloneEditables = clone.querySelectorAll('[contenteditable]');
-    for (let i = 0; i < cloneEditables.length; i++) {
-        if (origEditables[i]) cloneEditables[i].innerHTML = origEditables[i].innerHTML;
-    }
-
-    // Revert original immediately (so UI doesn't stay in print-mode)
-    if (mode === 'customer') {
-        toggleOfficeCols(true);
-        updateColspans(false);
-        document.body.classList.remove("customer-copy-print");
-        document.getElementById("grandTotalSell").classList.remove("customer-copy");
-    }
-
-    // Prepare clone for print capture
-    //  - remove interactive controls (.no-print),
-    //  - replace inputs/selects with plain spans,
-    //  - replace images with placeholders (avoid CORS/taint),
-    //  - show/hide office-only / print-onlys according to mode
-    function prepareCloneForPrint(root) {
-        // Remove no-print parts
-        root.querySelectorAll('.no-print').forEach(el => el.remove());
-
-        // Replace images with placeholders to avoid CORS problems.
-        // If you want the real logo in the image, embed it as a base64 data URL or serve it with CORS headers.
-        root.querySelectorAll('img').forEach(img => {
-            const placeholder = document.createElement('div');
-            placeholder.textContent = img.alt || 'Logo';
-            placeholder.style.display = 'inline-block';
-            placeholder.style.fontWeight = '700';
-            placeholder.style.fontSize = '14px';
-            // preserve basic size so layout doesn't collapse
-            placeholder.style.width = (img.width || 140) + 'px';
-            placeholder.style.height = (img.height || 28) + 'px';
-            img.parentNode.replaceChild(placeholder, img);
-        });
-
-        // Replace controls with spans
-        root.querySelectorAll('input, select, textarea').forEach(ctrl => {
-            const span = document.createElement('span');
-            if (ctrl.tagName.toLowerCase() === 'select') {
-                span.textContent = (ctrl.options[ctrl.selectedIndex] ? ctrl.options[ctrl.selectedIndex].text : ctrl.value) || '';
-            } else if (ctrl.type === 'checkbox' || ctrl.type === 'radio') {
-                span.textContent = ctrl.checked ? 'Yes' : '';
-            } else {
-                span.textContent = ctrl.value || '';
-            }
-            span.className = 'printed-value';
-            if (ctrl.parentNode) ctrl.parentNode.replaceChild(span, ctrl);
-        });
-
-        // Remove contenteditable so it becomes plain text
-        root.querySelectorAll('[contenteditable]').forEach(el => el.removeAttribute('contenteditable'));
-
-        // show print-only header
-        root.querySelectorAll('.print-only').forEach(el => {
-            if (el.tagName.toLowerCase() === 'div') el.style.display = 'flex';
-            else el.style.display = '';
-        });
-
-        // show discounted row only for customer copy
-        root.querySelectorAll('.print-onlys').forEach(el => {
-            el.style.display = (mode === 'customer') ? 'table-row' : 'none';
-        });
-
-        // Office columns shown only for office
-        root.querySelectorAll('.office-only').forEach(el => {
-            el.style.display = (mode === 'office') ? '' : 'none';
-        });
-
-        // apply strike-through for grand total in customer clone
-        const g = root.querySelector('#grandTotalSell');
-        if (g) {
-            if (mode === 'customer') g.classList.add('customer-copy');
-            else g.classList.remove('customer-copy');
-        }
-    }
-
-    prepareCloneForPrint(clone);
-
-    // Wrap clone for a clean capture area
-    const wrapper = document.createElement('div');
-    wrapper.id = 'print-capture-wrapper';
-    wrapper.style.width = '794px'; // ~A4 at 96dpi
-    wrapper.style.backgroundColor = '#ffffff';
-    wrapper.style.padding = '16px';
-    wrapper.style.position = 'fixed';
-    wrapper.style.left = '50%';
-    wrapper.style.top = '50%';
-    wrapper.style.transform = 'translate(-50%,-50%)';
-    wrapper.style.zIndex = '999999';
-    wrapper.appendChild(clone);
-    document.body.appendChild(wrapper);
-
-    // Give the browser a moment to render the clone, then capture
-    setTimeout(() => {
-        html2canvas(wrapper, {
-            scale: 2,
-            useCORS: true,
-            backgroundColor: '#ffffff',
-            scrollY: -window.scrollY,
-            windowWidth: document.documentElement.scrollWidth,
-            windowHeight: document.documentElement.scrollHeight
-        }).then(canvas => {
-            const link = document.createElement('a');
-            const now = new Date();
-            const timestamp = `${String(now.getFullYear())}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}_${String(now.getHours()).padStart(2,'0')}${String(now.getMinutes()).padStart(2,'0')}`;
-            link.download = `quotation-${mode}-${timestamp}.png`;
-            link.href = canvas.toDataURL('image/png');
-            link.click();
-        }).catch(err => {
-            console.error('html2canvas error', err);
-            alert('Export failed — check console for details (possible CORS/tainted canvas issue).');
-        }).finally(() => {
-            if (wrapper.parentNode) wrapper.parentNode.removeChild(wrapper);
-        });
-    }, 180);
-}
-
-// simple wrapper used by your buttons
-function exportAsImage(copyType) {
-    capturePrintAsImage(copyType);
-}
-
-
 /* --------- initial setup --------- */
 document.addEventListener('DOMContentLoaded', function() {
     toggleOfficeCols(true);
@@ -555,6 +375,65 @@ document.addEventListener('DOMContentLoaded', function() {
         })
         .catch(err => console.error("Error loading agent.json", err));
 });
+
+/* --------- open in new tab --------- */
+function openCustomerCopy() {
+    if (!validateForm()) return;
+    syncPrintFields();
+    toggleOfficeCols(false);
+    updateColspans(true);
+    document.body.classList.add("customer-copy-print");
+    document.getElementById("grandTotalSell").classList.add("customer-copy");
+
+    let content = document.getElementById("quotation-container").outerHTML;
+    let style = document.querySelector("style").outerHTML;
+    let links = Array.from(document.querySelectorAll("link, style")).map(el => el.outerHTML).join("\n");
+    let win = window.open("", "_blank");
+    win.document.write(`
+        <html>
+        <head>
+            <title>Customer Copy</title>
+            ${links}
+        </head>
+        <body class="customer-copy-print">
+            ${content}
+        </body>
+        </html>
+    `);
+    win.document.close();
+
+    // restore page
+    toggleOfficeCols(true);
+    updateColspans(false);
+    document.body.classList.remove("customer-copy-print");
+    document.getElementById("grandTotalSell").classList.remove("customer-copy");
+}
+
+function openOfficeCopy() {
+    if (!validateForm()) return;
+    syncPrintFields();
+    toggleOfficeCols(true);
+    updateColspans(false);
+    document.body.classList.remove("customer-copy-print");
+    document.getElementById("grandTotalSell").classList.remove("customer-copy");
+
+    let content = document.getElementById("quotation-container").outerHTML;
+    let links = Array.from(document.querySelectorAll("link, style")).map(el => el.outerHTML).join("\n");
+    let win = window.open("", "_blank");
+    win.document.write(`
+        <html>
+        <head>
+            <title>Office Copy</title>
+            ${links}
+        </head>
+        <body>
+            ${content}
+        </body>
+        </html>
+    `);
+    win.document.close();
+}
+
 </script>
 
 </body>
