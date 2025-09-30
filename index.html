@@ -2,10 +2,9 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>TIEN TIEN Quick Quotation Generator | Beta 3.5</title>
+<title>TIEN TIEN Quick Quotation Generator | Beta 3.2</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
-
 <style>
     .no-print { margin-top: 15px; }
     .totals { font-weight: bold; }
@@ -39,9 +38,6 @@
         body.customer-copy-print .print-onlys { display: table-row !important; }
     }
 </style>
-	
-<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
-
 </head>
 <body class="p-4">
 
@@ -122,11 +118,9 @@
             </select>
         </div>
         <div class="align-items-right">
-            <button class="btn btn-success bi-plus-circle mr-2" onclick="addItem()"> Add Item</button> | 
-            Customer Copy <button class="btn btn-primary bi-printer mr-2" onclick="printCustomer()"></button> <button class="btn btn-info bi-image mr-2" onclick="exportCustomerImage()"></button> | 
-			Office Copy <button class="btn btn-warning bi-printer mr-2" onclick="printOffice()"></button> <button class="btn btn-secondary bi-image mr-2" onclick="exportOfficeImage()"></button>
-
-
+            <button class="btn btn-success bi-plus-circle mr-2" onclick="addItem()"> Add Item</button>
+            <button class="btn btn-primary bi-printer mr-2" onclick="printCustomer()"> Print Customer Copy</button>
+            <button class="btn btn-warning bi-printer mr-2" onclick="printOffice()"> Print Office Copy</button>
         </div>
     </div>
 </div>
@@ -143,7 +137,7 @@ function syncPrintFields() {
     let dateVal = document.getElementById("quotationDate").value;
     if (dateVal) {
         let d = new Date(dateVal);
-        d.setDate(d.getDate() + 30);
+        d.setDate(d.getDate() + 14);
         let options = { year: 'numeric', month: 'long', day: '2-digit' };
         document.getElementById("quotationValidity").innerHTML = "*This quotation valid until " + d.toLocaleDateString('en-GB', options);
     }
@@ -298,59 +292,6 @@ function printOffice() {
     }, 60);
 }
 
-/* --------- export print page to image --------- */
-function exportCustomerImage() {
-    if (!validateForm()) return;
-    syncPrintFields();
-    toggleOfficeCols(false);
-    updateColspans(true);
-    document.body.classList.add("customer-copy-print");
-    document.getElementById("grandTotalSell").classList.add("customer-copy");
-
-    setTimeout(() => {
-        html2canvas(document.getElementById("quotation-container"), {
-            scale: 2,
-            useCORS: true,
-            backgroundColor: "#ffffff"
-        }).then(canvas => {
-            let link = document.createElement("a");
-            link.href = canvas.toDataURL("image/png");
-            link.download = "quotation-customer.png";
-            link.click();
-        }).finally(() => {
-            // reset back to normal mode
-            toggleOfficeCols(true);
-            updateColspans(false);
-            document.body.classList.remove("customer-copy-print");
-            document.getElementById("grandTotalSell").classList.remove("customer-copy");
-        });
-    }, 200);
-}
-
-function exportOfficeImage() {
-    if (!validateForm()) return;
-    syncPrintFields();
-    toggleOfficeCols(true);
-    updateColspans(false);
-    document.body.classList.remove("customer-copy-print");
-    document.getElementById("grandTotalSell").classList.remove("customer-copy");
-
-    setTimeout(() => {
-        html2canvas(document.getElementById("quotation-container"), {
-            scale: 2,
-            useCORS: true,
-            backgroundColor: "#ffffff"
-        }).then(canvas => {
-            let link = document.createElement("a");
-            link.href = canvas.toDataURL("image/png");
-            link.download = "quotation-office.png";
-            link.click();
-        });
-    }, 200);
-}
-
-
-
 /* --------- export/import JSON --------- */
 function exportJSON() {
     var data = {
@@ -415,7 +356,6 @@ function importJSON(event) {
     reader.readAsText(file);
 }
 
-
 /* --------- initial setup --------- */
 document.addEventListener('DOMContentLoaded', function() {
     toggleOfficeCols(true);
@@ -437,9 +377,3 @@ document.addEventListener('DOMContentLoaded', function() {
 
 </body>
 </html>
-
-
-
-
-
-
