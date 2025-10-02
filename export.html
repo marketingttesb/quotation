@@ -97,11 +97,11 @@ window.addEventListener("message", function(event) {
         });
         tfoot.innerHTML = `
             <tr>
-                <td colspan="4" class="text-right"><b>Grand Total: RM</b></td>
+                <td colspan="4" class="text-right"><b>Total</b></td>
                 <td class="currency strike">${formatCurrency(grandSell)}</td>
             </tr>
             <tr>
-                <td colspan="4" class="text-right"><b>Discounted Price: RM</b></td>
+                <td colspan="4" class="text-right"><b>After Less</b></td>
                 <td class="currency"><b>${formatCurrency(grandCost)}</b></td>
             </tr>`;
     } else {
@@ -126,7 +126,7 @@ window.addEventListener("message", function(event) {
         });
         tfoot.innerHTML = `
             <tr>
-                <td colspan="4" class="text-right"><b>Grand Total: RM</b></td>
+                <td colspan="4" class="text-right"><b>Total</b></td>
                 <td class="currency">${formatCurrency(grandSell)}</td>
                 <td></td>
                 <td class="currency">${formatCurrency(grandCost)}</td>
