@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>TIEN TIEN Quick Quotation Generator | Beta 3.2</title>
+<title>TIEN TIEN Quick Quotation Generator | Beta 3.3</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
 <style>
@@ -18,23 +18,15 @@
         cursor: pointer;
     }
     table { width: 100% !important; }
-    td, th { vertical-align: middle; }
-    /* semua nombor align kanan */
-    .num, .subtotalSell, .subtotalCost, 
-    #grandTotalSell, #grandTotalCost, #grandTotalCostCustomer {
-        text-align: right !important;
-    }
+    td, th { text-align: left; }
+    td.currency, th.currency { text-align: right; }  /* harga right aligned */
     @media print {
         .no-print { display: none !important; }
         input.form-control, select.form-control { display: none !important; }
         .print-only { display: flex !important; justify-content: space-between; }
         .form-control { border: none !important; }
-
-        #grandTotalSell.customer-copy {
-            text-decoration: line-through;
-        }
+        #grandTotalSell.customer-copy { text-decoration: line-through; }
         #cust-table { width: 100%; }
-
         .print-onlys { display: none !important; }
         body.customer-copy-print .print-onlys { display: table-row !important; }
     }
@@ -81,11 +73,11 @@
             <tr>
                 <th>#</th>
                 <th>Products</th>
-                <th class="num">Quantity</th>
-                <th class="num">Price(RM)</th>
-                <th class="office-only num">PM Price(RM)</th>
-                <th class="num">Total(RM)</th>
-                <th class="office-only num">Total PM Price(RM)</th>
+                <th>Quantity</th>
+                <th class="currency">Price(RM)</th>
+                <th class="office-only currency">PM Price(RM)</th>
+                <th class="currency">Total(RM)</th>
+                <th class="office-only currency">Total PM Price(RM)</th>
                 <th class="no-print">&nbsp;</th>
             </tr>
         </thead>
@@ -93,17 +85,19 @@
         <tfoot>
             <tr id="grandTotalRow">
                 <td id="grandTotalTitle" class="text-right totals">Grand Total: RM</td>
-                <td id="grandTotalSell" class="num">0.00</td>
-                <td class="office-only num" id="grandTotalCost">0.00</td>
+                <td id="grandTotalSell" class="currency">0.00</td>
+                <td class="office-only currency" id="grandTotalCost">0.00</td>
                 <td class="no-print"></td>
             </tr>
+            <!-- Fixed row for customer copy -->
             <tr id="customerGrandCostRow" class="print-onlys">
                 <td id="customerGrandTitle" class="text-right totals">Discounted Price: RM</td>
-                <td id="grandTotalCostCustomer" class="num">0.00</td>
+                <td id="grandTotalCostCustomer" class="currency">0.00</td>
             </tr>
         </tfoot>
     </table>
 
+    <!-- Terms & Prepared By (Print Only) -->
     <div class="print-only mt-3">
         <p id="quotationValidity" class="font-weight-bold"></p>
         <p id="preparedBy"></p>
@@ -128,9 +122,9 @@
 document.getElementById("quotationDate").value = new Date().toISOString().split('T')[0];
 syncPrintFields();
 
-/* --------- number formatting --------- */
-function formatNumber(num) {
-    return (parseFloat(num) || 0).toLocaleString("en-MY", {minimumFractionDigits:2, maximumFractionDigits:2});
+/* --------- formatting --------- */
+function formatCurrency(num) {
+    return num.toLocaleString('en-MY', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
 /* --------- syncing print fields --------- */
@@ -157,11 +151,11 @@ function addItem() {
     row.innerHTML =
         '<td class="row-number"></td>' +
         '<td contenteditable="true">Item</td>' +
-        '<td class="num"><input type="number" value="1" min="1" required class="form-control" oninput="updateRow(this)"><span class="print-only"></span></td>' +
-        '<td class="num"><input type="number" value="0" min="0" required class="form-control" oninput="updateRow(this)"><span class="print-only"></span></td>' +
-        '<td class="office-only num"><input type="number" value="0" min="0" required class="form-control" oninput="updateRow(this)"><span class="print-only"></span></td>' +
-        '<td class="subtotalSell num">0.00</td>' +
-        '<td class="subtotalCost office-only num">0.00</td>' +
+        '<td><input type="number" value="1" min="1" required class="form-control" oninput="updateRow(this)"><span class="print-only"></span></td>' +
+        '<td class="currency"><input type="number" value="0" min="0" required class="form-control" oninput="updateRow(this)"><span class="print-only"></span></td>' +
+        '<td class="office-only currency"><input type="number" value="0" min="0" required class="form-control" oninput="updateRow(this)"><span class="print-only"></span></td>' +
+        '<td class="subtotalSell currency">0.00</td>' +
+        '<td class="subtotalCost office-only currency">0.00</td>' +
         '<td class="no-print"><button class="btn btn-danger btn-sm bi-trash3" onclick="removeItem(this)"></button></td>';
     tbody.appendChild(row);
     renumberRows();
@@ -183,7 +177,7 @@ function renumberRows() {
 
 function updateRow(input) {
     var span = input.nextElementSibling;
-    span.innerHTML = formatNumber(input.value);
+    span.innerHTML = input.value;
     updateTotals();
 }
 
@@ -198,27 +192,27 @@ function updateTotals() {
         var sell = parseFloat(rows[i].querySelector('td:nth-child(4) input').value) || 0;
         var cost = rows[i].querySelector('td:nth-child(5) input') ? parseFloat(rows[i].querySelector('td:nth-child(5) input').value) || 0 : 0;
 
-        rows[i].querySelector('td:nth-child(3) span').innerHTML = formatNumber(qty);
-        rows[i].querySelector('td:nth-child(4) span').innerHTML = formatNumber(sell);
+        rows[i].querySelector('td:nth-child(3) span').innerHTML = qty;
+        rows[i].querySelector('td:nth-child(4) span').innerHTML = formatCurrency(sell);
         if (rows[i].querySelector('td:nth-child(5) span')) {
-            rows[i].querySelector('td:nth-child(5) span').innerHTML = formatNumber(cost);
+            rows[i].querySelector('td:nth-child(5) span').innerHTML = formatCurrency(cost);
         }
 
         var subtotalSell = qty * sell;
         var subtotalCost = qty * cost;
 
-        rows[i].querySelector(".subtotalSell").innerHTML = formatNumber(subtotalSell);
+        rows[i].querySelector(".subtotalSell").innerHTML = formatCurrency(subtotalSell);
         if (rows[i].querySelector(".subtotalCost")) {
-            rows[i].querySelector(".subtotalCost").innerHTML = formatNumber(subtotalCost);
+            rows[i].querySelector(".subtotalCost").innerHTML = formatCurrency(subtotalCost);
         }
 
         grandSell += subtotalSell;
         grandCost += subtotalCost;
     }
 
-    document.getElementById("grandTotalSell").innerHTML = formatNumber(grandSell);
-    document.getElementById("grandTotalCost").innerHTML = formatNumber(grandCost);
-    document.getElementById("grandTotalCostCustomer").innerHTML = formatNumber(grandCost);
+    document.getElementById("grandTotalSell").innerHTML = formatCurrency(grandSell);
+    document.getElementById("grandTotalCost").innerHTML = formatCurrency(grandCost);
+    document.getElementById("grandTotalCostCustomer").innerHTML = formatCurrency(grandCost);
     updateColspans(false);
 }
 
