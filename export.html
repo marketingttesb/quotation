@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Export Quotation | Beta 1.6</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+<style>
+body { font-family: Arial, sans-serif; background:#f9f9f9; padding:20px; }
+#exportArea { background:#fff; padding:20px; border-radius:10px; box-shadow:0 0 8px rgba(0,0,0,0.1); }
+#copyTitle { margin:0; }
+.strike { text-decoration: line-through; color:#666; }
+th.currency, td.currency { text-align: right; } /* align kanan utk harga */
+</style>
+</head>
+<body>
+<div class="container">
+    <div id="exportArea">
+        <!-- Header with Logo & Title -->
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <img src="transparent_black.png" alt="Logo" style="height:80px;">
+            <h2 id="copyTitle"></h2>
+        </div>
+
+        <!-- Customer Info -->
+        <div class="d-flex justify-content-between mb-2">
+            <p class="mb-0"><strong>Customer Name:</strong> <span id="printCustomerName"></span></p>
+            <p class="mb-0"><strong>Date:</strong> <span id="printQuotationDate"></span></p>
+        </div>
+
+        <!-- Items Table -->
+        <table id="itemsTable" class="table table-bordered">
+            <thead id="tableHead" class="thead-light"></thead>
+            <tbody></tbody>
+            <tfoot id="tableFoot"></tfoot>
+        </table>
+
+        <!-- Footer -->
+        <p id="quotationValidity" class="mt-2 font-weight-bold"></p>
+        <p id="preparedBy"></p>
+    </div>
+</div>
+
+<script>
+function getParam(name) {
+    return new URLSearchParams(window.location.search).get(name);
+}
+
+// Format number ke currency RM
+function formatCurrency(num) {
+    return parseFloat(num).toLocaleString("en-MY", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+window.addEventListener("message", function(event) {
+    let type = getParam("type"); // customer / office
+    let data = event.data;
+
+    document.getElementById("copyTitle").innerText = 
+        "Quick Quotation - " + (type === "customer" ? "Customer Copy" : "Office Copy");
+    document.getElementById("printCustomerName").innerText = data.customerName;
+    document.getElementById("printQuotationDate").innerText = data.quotationDate;
+    document.getElementById("preparedBy").innerText = "Prepared By: " + data.agentName;
+
+    // validity
+    if (data.quotationDate) {
+        let d = new Date(data.quotationDate);
+        d.setDate(d.getDate() + 14);
+        document.getElementById("quotationValidity").innerText = "*This quotation valid until " + d.toDateString();
+    }
+
+    let tbody = document.querySelector("#itemsTable tbody");
+    let thead = document.getElementById("tableHead");
+    let tfoot = document.getElementById("tableFoot");
+    tbody.innerHTML = "";
+    thead.innerHTML = "";
+    tfoot.innerHTML = "";
+
+    let grandSell = 0, grandCost = 0;
+
+    if (type === "customer") {
+        // customer table
+        thead.innerHTML = `<tr>
+            <th>#</th><th>Product</th><th>Qty</th>
+            <th class="currency">Price (RM)</th><th class="currency">Total (RM)</th>
+        </tr>`;
+        data.items.forEach((item,i) => {
+            let subtotalSell = item.qty * item.sell;
+            let subtotalCost = item.qty * item.cost;
+            grandSell += subtotalSell;
+            grandCost += subtotalCost;
+            let tr = document.createElement("tr");
+            tr.innerHTML = `<td>${i+1}</td><td>${item.product}</td><td>${item.qty}</td>
+                            <td class="currency">${formatCurrency(item.sell)}</td>
+                            <td class="currency">${formatCurrency(subtotalSell)}</td>`;
+            tbody.appendChild(tr);
+        });
+        tfoot.innerHTML = `
+            <tr>
+                <td colspan="4" class="text-right"><b>Grand Total: RM</b></td>
+                <td class="currency strike">${formatCurrency(grandSell)}</td>
+            </tr>
+            <tr>
+                <td colspan="4" class="text-right"><b>Discounted Price: RM</b></td>
+                <td class="currency"><b>${formatCurrency(grandCost)}</b></td>
+            </tr>`;
+    } else {
+        // office table
+        thead.innerHTML = `<tr>
+            <th>#</th><th>Product</th><th>Qty</th>
+            <th class="currency">Selling Price (RM)</th><th class="currency">Total (RM)</th>
+            <th class="currency">PM Price (RM)</th><th class="currency">Total PM (RM)</th>
+        </tr>`;
+        data.items.forEach((item,i) => {
+            let subtotalSell = item.qty * item.sell;
+            let subtotalCost = item.qty * item.cost;
+            grandSell += subtotalSell;
+            grandCost += subtotalCost;
+            let tr = document.createElement("tr");
+            tr.innerHTML = `<td>${i+1}</td><td>${item.product}</td><td>${item.qty}</td>
+                            <td class="currency">${formatCurrency(item.sell)}</td>
+                            <td class="currency">${formatCurrency(subtotalSell)}</td>
+                            <td class="currency">${formatCurrency(item.cost)}</td>
+                            <td class="currency">${formatCurrency(subtotalCost)}</td>`;
+            tbody.appendChild(tr);
+        });
+        tfoot.innerHTML = `
+            <tr>
+                <td colspan="4" class="text-right"><b>Grand Total: RM</b></td>
+                <td class="currency">${formatCurrency(grandSell)}</td>
+                <td></td>
+                <td class="currency">${formatCurrency(grandCost)}</td>
+            </tr>`;
+    }
+
+    // auto export image
+    setTimeout(() => {
+        html2canvas(document.getElementById("exportArea"), { scale:2 }).then(canvas => {
+            let link = document.createElement("a");
+            link.download = type + "_copy.png";
+            link.href = canvas.toDataURL("image/png");
+            link.click();
+        });
+    }, 500);
+});
+</script>
+</body>
+</html>
