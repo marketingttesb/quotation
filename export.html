@@ -23,8 +23,13 @@ body { font-family: Arial, sans-serif; background:#f9f9f9; padding:20px; }
         </div>
 
         <!-- Customer Info -->
-        <p><strong>Customer Name:</strong> <span id="printCustomerName"></span></p>
-        <p><strong>Date:</strong> <span id="printQuotationDate"></span></p>
+        <!-- p><strong>Customer Name:</strong> <span id="printCustomerName"></span></p>
+        <p><strong>Date:</strong> <span id="printQuotationDate"></span></p -->
+
+        <div class="d-flex justify-content-between mb-2">
+            <p class="mb-0"><strong>Customer Name:</strong> <span id="printCustomerName"></span></p>
+            <p class="mb-0"><strong>Date:</strong> <span id="printQuotationDate"></span></p>
+        </div>
 
         <!-- Items Table -->
         <table id="itemsTable" class="table table-bordered">
@@ -57,7 +62,7 @@ window.addEventListener("message", function(event) {
     // validity
     if (data.quotationDate) {
         let d = new Date(data.quotationDate);
-        d.setDate(d.getDate() + 30);
+        d.setDate(d.getDate() + 14);
         document.getElementById("quotationValidity").innerText = "*This quotation valid until " + d.toDateString();
     }
 
