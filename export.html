@@ -91,7 +91,7 @@ window.addEventListener("message", function(event) {
             grandSell += subtotalSell;
             grandCost += subtotalCost;
             let tr = document.createElement("tr");
-            tr.innerHTML = `<td>${i+1}</td><td class="qty">${item.product}</td><td>${item.qty}</td>
+            tr.innerHTML = `<td>${i+1}</td><td>${item.product}</td><td class="qty">${item.qty}</td>
                             <td class="currency">${formatCurrency(item.sell)}</td>
                             <td class="currency">${formatCurrency(subtotalSell)}</td>`;
             tbody.appendChild(tr);
@@ -118,7 +118,7 @@ window.addEventListener("message", function(event) {
             grandSell += subtotalSell;
             grandCost += subtotalCost;
             let tr = document.createElement("tr");
-            tr.innerHTML = `<td>${i+1}</td><td class="qty">${item.product}</td><td>${item.qty}</td>
+            tr.innerHTML = `<td>${i+1}</td><td>${item.product}</td><td class="qty">${item.qty}</td>
                             <td class="currency">${formatCurrency(item.sell)}</td>
                             <td class="currency">${formatCurrency(subtotalSell)}</td>
                             <td class="currency">${formatCurrency(item.cost)}</td>
