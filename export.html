@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Export Quotation | Beta 1.9</title>
+<title>Export Quotation | Beta 2.0</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
@@ -82,7 +82,7 @@ window.addEventListener("message", function(event) {
     if (type === "customer") {
         // customer table
         thead.innerHTML = `<tr>
-            <th>#</th><th>Product</th><th class="qty">Qty</th>
+            <th class="qty">#</th><th>Product</th><th class="qty">Qty</th>
             <th class="currency">Price (RM)</th><th class="currency">Total (RM)</th>
         </tr>`;
         data.items.forEach((item,i) => {
@@ -91,7 +91,7 @@ window.addEventListener("message", function(event) {
             grandSell += subtotalSell;
             grandCost += subtotalCost;
             let tr = document.createElement("tr");
-            tr.innerHTML = `<td>${i+1}</td><td>${item.product}</td><td class="qty">${item.qty}</td>
+            tr.innerHTML = `<td class="qty">${i+1}</td><td>${item.product}</td><td class="qty">${item.qty}</td>
                             <td class="currency">${formatCurrency(item.sell)}</td>
                             <td class="currency">${formatCurrency(subtotalSell)}</td>`;
             tbody.appendChild(tr);
@@ -108,7 +108,7 @@ window.addEventListener("message", function(event) {
     } else {
         // office table
         thead.innerHTML = `<tr>
-            <th>#</th><th>Product</th><th class="qty">Qty</th>
+            <th class="qty">#</th><th>Product</th><th class="qty">Qty</th>
             <th class="currency">Selling Price (RM)</th><th class="currency">Total (RM)</th>
             <th class="currency">PM Price (RM)</th><th class="currency">Total PM (RM)</th>
         </tr>`;
@@ -118,7 +118,7 @@ window.addEventListener("message", function(event) {
             grandSell += subtotalSell;
             grandCost += subtotalCost;
             let tr = document.createElement("tr");
-            tr.innerHTML = `<td>${i+1}</td><td>${item.product}</td><td class="qty">${item.qty}</td>
+            tr.innerHTML = `<td class="qty">${i+1}</td><td>${item.product}</td><td class="qty">${item.qty}</td>
                             <td class="currency">${formatCurrency(item.sell)}</td>
                             <td class="currency">${formatCurrency(subtotalSell)}</td>
                             <td class="currency">${formatCurrency(item.cost)}</td>
