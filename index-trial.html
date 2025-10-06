@@ -1,4 +1,63 @@
-<!DOCTYPE html> <html lang="en"> <head> <meta charset="UTF-8"> <title>TIEN TIEN Quick Quotation Generator | Beta 3.9</title> <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css"> <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css"> <style> .no-print { margin-top: 15px; } .totals { font-weight: bold; } .print-only { display: none; } .print-onlys { display: none; } .icon-btn { border: none; background: none; font-size: 1.3rem; margin-left: 8px; cursor: pointer; } table { width: 100% !important; } td, th { text-align: left; } td.currency, th.currency { text-align: right; } /* harga right aligned */ td.qty, th.qty { text-align: center; } /* center aligned */ @media print { .no-print { display: none !important; } input.form-control, select.form-control { display: none !important; } .print-only { display: flex !important; justify-content: space-between; } .form-control { border: none !important; } #grandTotalSell.customer-copy { text-decoration: line-through; } #cust-table { width: 100%; } .print-onlys { display: none !important; } body.customer-copy-print .print-onlys { display: table-row !important; } td.qty, th.qty { text-align: center; } /* center aligned */ } </style> </head> <body class="p-4">
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>TIEN TIEN Quick Quotation Generator | Beta 4.0</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+<style>
+    .no-print { margin-top: 15px; }
+    .totals { font-weight: bold; }
+    .print-only { display: none; }
+    .print-onlys { display: none; }
+    .icon-btn {
+        border: none;
+        background: none;
+        font-size: 1.3rem;
+        margin-left: 8px;
+        cursor: pointer;
+    }
+
+    /* Table base */
+    table { width: 100% !important; }
+    td, th { vertical-align: middle; text-align: left; }
+
+    /* Quantity center (both header, cell and input) */
+    td.qty, th.qty { text-align: center; }
+    td.qty input { text-align: center; }
+    td.qty .print-only { display: inline-block; min-width: 40px; text-align: center; }
+
+    /* Price columns and subtotals right aligned */
+    td.currency, th.currency,
+    td.subtotalSell, td.subtotalCost,
+    #grandTotalSell, #grandTotalCost, #grandTotalCostCustomer {
+        text-align: right;
+    }
+    /* Ensure number inputs in currency columns are right-aligned while editing */
+    td.currency input, td.subtotalSell input, td.subtotalCost input {
+        text-align: right;
+    }
+
+    @media print {
+        .no-print { display: none !important; }
+        input.form-control, select.form-control { display: none !important; }
+        .print-only { display: flex !important; justify-content: space-between; }
+        .form-control { border: none !important; }
+        #grandTotalSell.customer-copy { text-decoration: line-through; }
+        #cust-table { width: 100%; }
+        .print-onlys { display: none !important; }
+        body.customer-copy-print .print-onlys { display: table-row !important; }
+
+        /* Keep alignments in print */
+        td.qty, th.qty { text-align: center !important; }
+        td.currency, th.currency, td.subtotalSell, td.subtotalCost,
+        #grandTotalSell, #grandTotalCost, #grandTotalCostCustomer {
+            text-align: right !important;
+        }
+    }
+</style>
+</head>
+<body class="p-4">
 
 <div class="container" id="quotation-container">
     <div class="d-flex justify-content-between align-items-center mb-3">
@@ -28,10 +87,10 @@
     </div>
 
     <!-- Customer Info (Print) -->
-	<div class="print-only mb-3 w-100">
-		<div><strong>Customer Name:</strong> <span id="printCustomerName"></span></div>
-		<div><strong>Date:</strong> <span id="printQuotationDate"></span></div>
-	</div>
+    <div class="print-only mb-3 w-100">
+        <div><strong>Customer Name:</strong> <span id="printCustomerName"></span></div>
+        <div><strong>Date:</strong> <span id="printQuotationDate"></span></div>
+    </div>
 
     <!-- Items Table -->
     <table class="table table-bordered" id="itemsTable">
