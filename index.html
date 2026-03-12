@@ -139,7 +139,7 @@ function syncPrintFields() {
         let d = new Date(dateVal);
         d.setDate(d.getDate() + 14);
         let options = { year: 'numeric', month: 'long', day: '2-digit' };
-        document.getElementById("quotationValidity").innerHTML = "*This quotation valid until " + d.toLocaleDateString('en-GB', options);
+        document.getElementById("quotationValidity").innerHTML = "*This quotation valid until " + d.toLocaleDateString('en-GB', options)+"<br /><em style='font-size:10px'>REMARKS:<br />- Lead times are estimates only and are subject to change without prior notice.<br />- Due to the ongoing conflict in the Middle East, widespread maritime diversions and resulting port congestion, we cannot guarantee arrival dates at this time.<br />- All orders are subject to carrier vessel availability and any Emergency War Risk Surcharges (EWRS) applicable at the time of shipment.<br />- We highly recommend selecting EX-STOCK items to ensure your project timeline.</em>";
     }
 
     let agent = document.getElementById("agentName").value;
