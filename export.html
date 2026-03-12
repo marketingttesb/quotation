@@ -67,7 +67,7 @@ window.addEventListener("message", function(event) {
     if (data.quotationDate) {
         let d = new Date(data.quotationDate);
         d.setDate(d.getDate() + 14);
-        document.getElementById("quotationValidity").innerText = "*This quotation valid until " + d.toDateString();
+        document.getElementById("quotationValidity").innerText = "*This quotation valid until " + d.toDateString()+"<br /><em style='font-size:10px'>REMARKS:<br />- Lead times are estimates only and are subject to change without prior notice.<br />- Due to the ongoing conflict in the Middle East, widespread maritime diversions and resulting port congestion, we cannot guarantee arrival dates at this time.<br />- All orders are subject to carrier vessel availability and any Emergency War Risk Surcharges (EWRS) applicable at the time of shipment.<br />- We highly recommend selecting EX-STOCK items to ensure your project timeline.</em>";
     }
 
     let tbody = document.querySelector("#itemsTable tbody");
